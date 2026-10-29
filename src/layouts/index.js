@@ -1,1 +1,2 @@
-// Export page layouts from this module.
+export { AdminLayout } from './AdminLayout'
+export { AuthLayout } from './AuthLayout'
