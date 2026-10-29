@@ -1,0 +1,34 @@
+.admin-layout {
+  min-height: 100vh;
+}
+
+.admin-main {
+  margin-left: var(--sidebar-width);
+  min-width: 0;
+}
+
+.admin-content {
+  padding: 0 var(--space-8) var(--space-8);
+}
+
+.admin-overlay {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .admin-main {
+    margin-left: 0;
+  }
+
+  .admin-content {
+    padding: 0 var(--space-4) var(--space-6);
+  }
+
+  .admin-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.55);
+  }
+}

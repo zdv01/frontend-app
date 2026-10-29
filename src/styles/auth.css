@@ -1,0 +1,114 @@
+/* Estilos de las pantallas públicas (login, registro, 2FA, recuperación) */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.auth-title {
+  color: var(--accent);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+}
+
+.auth-subtitle {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.auth-form .btn-primary {
+  width: 100%;
+  padding: 12px;
+}
+
+.auth-row {
+  display: flex;
+  justify-content: flex-end;
+  font-size: var(--fs-sm);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.oauth-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.oauth-buttons .btn {
+  padding: 10px 8px;
+}
+
+.auth-footer-text {
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.auth-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.auth-actions .btn {
+  flex: 1;
+}
+
+.code-input {
+  font-size: var(--fs-xl);
+  letter-spacing: 0.5em;
+  text-align: center;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.dev-hint {
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--warning);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.dev-hint strong {
+  color: var(--warning);
+}
+
+.auth-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+@media (max-width: 420px) {
+  .oauth-buttons {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.auth-heading-icon {
+  align-self: center;
+  color: var(--primary);
+}

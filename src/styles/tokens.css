@@ -1,0 +1,55 @@
+/*
+ * Tokens de diseño: todos los colores, tamaños y sombras de la app.
+ * Si un color cambia, se cambia aquí y se actualiza en todas las pantallas.
+ */
+:root {
+  /* Colores base (tema oscuro tipo panel deportivo) */
+  --bg: #060d1a;
+  --panel: #0b1628;
+  --panel-2: #0f1e35;
+  --border: #1c3354;
+  --text: #e6eef8;
+  --text-muted: #8ea3bd;
+
+  /* Colores de acción y estado */
+  --primary: #2ee55a;
+  --primary-hover: #4bf274;
+  --primary-soft: rgba(46, 229, 90, 0.12);
+  --primary-glow: rgba(46, 229, 90, 0.35);
+  --on-primary: #04210d;
+  --accent: #22d3ee;
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --info-soft: rgba(59, 130, 246, 0.12);
+
+  /* Tipografía */
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 2rem;
+
+  /* Espaciado */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Bordes y sombras */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-primary: 0 0 18px var(--primary-glow);
+
+  /* Medidas del layout */
+  --sidebar-width: 260px;
+  --topbar-height: 88px;
+}
