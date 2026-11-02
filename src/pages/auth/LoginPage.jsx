@@ -8,7 +8,6 @@ import { PasswordInput } from '../../components/PasswordInput'
 import { Spinner } from '../../components/Spinner'
 import { env } from '../../config/env'
 import { useAuth } from '../../hooks/useAuth'
-import { authService } from '../../services'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { hasErrors, validateEmail } from '../../utils/validators'
 
@@ -20,7 +19,7 @@ const OAUTH_BUTTONS = [
 
 // HU-SE-08: iniciar sesión con correo y contraseña o con un proveedor externo
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login, loginWithOAuth } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const notice = location.state?.notice
@@ -34,6 +33,26 @@ export function LoginPage() {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
     setErrors((current) => ({ ...current, [name]: '' }))
+  }
+
+  const handleOAuthLogin = async (provider) => {
+    setSubmitting(true)
+    setFormError('')
+    try {
+      const result = await loginWithOAuth(provider)
+      if (result.requires2FA) {
+        navigate('/verify-2fa', {
+          state: {
+            challengeId: result.challengeId,
+            email: result.email,
+            from: location.state?.from,
+          },
+        })
+      }
+    } catch (err) {
+      setFormError(getApiErrorMessage(err, 'No se pudo iniciar sesión con el proveedor.'))
+      setSubmitting(false)
+    }
   }
 
   const handleSubmit = async (event) => {
@@ -118,7 +137,7 @@ export function LoginPage() {
             type="button"
             className="btn"
             disabled={submitting}
-            onClick={() => window.location.assign(authService.getOAuthUrl(provider))}
+            onClick={() => handleOAuthLogin(provider)}
           >
             <Icon /> {label}
           </button>

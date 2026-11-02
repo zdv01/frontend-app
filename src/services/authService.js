@@ -1,4 +1,13 @@
+
 import { axiosClient } from '../api/axiosClient'
+import {
+  GithubAuthProvider,
+  GoogleAuthProvider,
+  OAuthProvider,
+  getIdToken,
+  signInWithPopup,
+} from 'firebase/auth'
+import { firebaseAuth, isFirebaseConfigured } from '../config/firebase'
 import { env } from '../config/env'
 import { toPermissionKey, toRole } from './mappers'
 import * as mock from './mock/authMock'
@@ -16,6 +25,29 @@ import * as mock from './mock/authMock'
 function decodeJwt(token) {
   const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
   return JSON.parse(atob(payload))
+}
+
+const firebaseProviders = {
+  google: () => new GoogleAuthProvider(),
+  github: () => new GithubAuthProvider(),
+  microsoft: () => new OAuthProvider('microsoft.com'),
+}
+
+function firebaseError(message) {
+  const error = new Error(message)
+  error.response = { status: 400, data: { message } }
+  return error
+}
+
+function getFirebaseErrorMessage(error) {
+  const messages = {
+    'auth/popup-closed-by-user': 'Cerraste la ventana de autenticación.',
+    'auth/popup-blocked': 'El navegador bloqueó la ventana de autenticación.',
+    'auth/account-exists-with-different-credential':
+      'Este correo ya está registrado con otro método de acceso.',
+    'auth/cancelled-popup-request': 'Ya hay una autenticación en curso.',
+  }
+  return messages[error.code] || 'No se pudo completar la autenticación con Firebase.'
 }
 
 // Con el token recién emitido, pide al backend quién es el usuario y qué puede hacer
@@ -118,9 +150,33 @@ const api = {
     await axiosClient.post('/auth/logout')
   },
 
-  // (propuesto) GET /api/auth/oauth/{provider} → redirige a Google/GitHub/Microsoft
-  getOAuthUrl(provider) {
-    return `${env.apiUrl}/auth/oauth/${provider}`
+  // Firebase autentica al usuario; el backend recibe el ID token y devuelve su JWT.
+  async loginWithFirebase(providerName) {
+    if (!isFirebaseConfigured()) {
+      throw firebaseError(
+        'Configura las variables VITE_FIREBASE_* en el archivo .env antes de usar este acceso.',
+      )
+    }
+    const createProvider = firebaseProviders[providerName]
+    if (!createProvider) throw firebaseError('Proveedor de autenticación no válido.')
+
+    let result
+    try {
+      result = await signInWithPopup(firebaseAuth, createProvider())
+      const idToken = await getIdToken(result.user)
+      const { data } = await axiosClient.post('/auth/oauth/firebase', { idToken })
+      if (data.requiresTwoFactor ?? data.requires2FA) {
+        return {
+          requires2FA: true,
+          challengeId: data.challengeToken ?? data.challengeId,
+          email: result.user.email,
+        }
+      }
+      return buildSession(data.accessToken, data.expiresAt)
+    } catch (error) {
+      if (error.response) throw error
+      throw firebaseError(getFirebaseErrorMessage(error))
+    }
   },
 
   // El backend vuelve a /auth/callback?token=...&expiresAt=... o ?error=...

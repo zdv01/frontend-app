@@ -22,6 +22,13 @@ Copia `.env.example` como `.env` para configurar el entorno local. Los archivos
 Las variables expuestas al navegador deben comenzar con `VITE_`; no almacenes
 secretos reales en ellas, porque Vite los incluye en el bundle público.
 
+Para habilitar los botones de Google, GitHub y Microsoft, completa en `.env`
+las variables `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
+`VITE_FIREBASE_PROJECT_ID` y `VITE_FIREBASE_APP_ID` con la configuración web
+pública de Firebase. El frontend obtiene el Firebase ID token y lo intercambia
+por el JWT propio del backend en `POST /api/auth/oauth/firebase`; nunca usa el
+ID token de Firebase para consumir otros endpoints.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -170,6 +170,10 @@ export function getOAuthUrl(provider) {
   return `/auth/callback?mockProvider=${provider}`
 }
 
+export async function loginWithFirebase(provider) {
+  return completeOAuth({ mockProvider: provider })
+}
+
 /*
  * Identidades simuladas de cada proveedor:
  * - google:    Sofía ya existe con Google → se identifica (no se duplica)

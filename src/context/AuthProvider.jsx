@@ -33,6 +33,14 @@ export function AuthProvider({ children }) {
     [startSession],
   )
 
+  const loginWithOAuth = useCallback(
+    async (provider) => {
+      const result = await authService.loginWithFirebase(provider)
+      return result.requires2FA ? result : startSession(result)
+    },
+    [startSession],
+  )
+
   const verifyTwoFactor = useCallback(
     async (challengeId, code) => startSession(await authService.verifyTwoFactor(challengeId, code)),
     [startSession],
@@ -96,6 +104,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(session),
       loggedOut,
       login,
+      loginWithOAuth,
       verifyTwoFactor,
       completeOAuth,
       logout,
@@ -104,7 +113,17 @@ export function AuthProvider({ children }) {
       // ¿El usuario tiene este permiso en al menos uno de sus roles?
       can: (resource, operation) => permissions.includes(permissionKey(resource, operation)),
     }
-  }, [session, loggedOut, login, verifyTwoFactor, completeOAuth, logout, refreshSession, updateUser])
+  }, [
+    session,
+    loggedOut,
+    login,
+    loginWithOAuth,
+    verifyTwoFactor,
+    completeOAuth,
+    logout,
+    refreshSession,
+    updateUser,
+  ])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
