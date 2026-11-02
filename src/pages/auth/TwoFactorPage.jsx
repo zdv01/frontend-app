@@ -25,6 +25,7 @@ export function TwoFactorPage() {
   const [code, setCode] = useState('')
   const [devCode, setDevCode] = useState(challenge?.devCode)
   const [error, setError] = useState('')
+  const [codeError, setCodeError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [resending, setResending] = useState(false)
 
@@ -36,11 +37,12 @@ export function TwoFactorPage() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     if (!/^\d{6}$/.test(code)) {
-      setError('Escribe el código de 6 dígitos.')
+      setCodeError('Escribe el código de 6 dígitos.')
       return
     }
     setSubmitting(true)
     setError('')
+    setCodeError('')
     try {
       await verifyTwoFactor(challenge.challengeId, code)
       navigate(challenge.from?.pathname ?? '/dashboard', { replace: true })
@@ -57,6 +59,7 @@ export function TwoFactorPage() {
       const result = await authService.resendTwoFactor(challenge.challengeId)
       setDevCode(result.devCode)
       setCode('')
+      setCodeError('')
       toast.info('Te enviamos un código nuevo a tu correo.')
     } catch (err) {
       setError(getApiErrorMessage(err, 'No se pudo reenviar el código.'))
@@ -74,21 +77,33 @@ export function TwoFactorPage() {
         <ShieldCheck size={40} className="auth-heading-icon" aria-hidden="true" />
         <h1 className="auth-title">Verificación en dos pasos</h1>
         <p className="auth-subtitle">
-          Enviamos un código de 6 dígitos a <strong>{challenge.email}</strong>. Vence en 5 minutos.
+          Enviamos un código de 6 dígitos a <strong>{challenge.email}</strong>. Úsalo antes de que
+          expire.
         </p>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}
 
-      <FormField label="Código de verificación" htmlFor="two-factor-code" required>
+      <FormField
+        label="Código de verificación"
+        htmlFor="two-factor-code"
+        required
+        error={codeError}
+        hint="Ingresa el código numérico de 6 dígitos que recibiste por correo."
+      >
         <input
           id="two-factor-code"
           className="input code-input"
           value={code}
-          onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+          onChange={(event) => {
+            setCode(event.target.value.replace(/\D/g, '').slice(0, 6))
+            setCodeError('')
+            setError('')
+          }}
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={6}
+          aria-invalid={Boolean(codeError)}
           autoFocus
         />
       </FormField>
@@ -102,16 +117,23 @@ export function TwoFactorPage() {
         <button type="button" className="btn" onClick={handleCancel} disabled={submitting}>
           Cancelar
         </button>
-        <button type="button" className="btn" onClick={handleResend} disabled={resending || submitting}>
-          {resending && <Spinner size={16} />}
-          Reenviar código
-        </button>
+        {env.useMocks && (
+          <button type="button" className="btn" onClick={handleResend} disabled={resending || submitting}>
+            {resending && <Spinner size={16} />}
+            Reenviar código
+          </button>
+        )}
       </div>
 
       {env.useMocks && devCode && (
         <div className="dev-hint">
           <strong>Modo de prueba.</strong> No se envían correos; tu código es <code>{devCode}</code>.
         </div>
+      )}
+      {!env.useMocks && (
+        <p className="field-hint">
+          El código vence en el tiempo configurado por el servidor. Si expira, vuelve al inicio de sesión.
+        </p>
       )}
     </form>
   )

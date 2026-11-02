@@ -106,26 +106,32 @@ async function buildSession(token, expiresAt) {
 }
 
 const api = {
-  // POST /api/auth/login → { accessToken, tokenType, expiresAt }
-  // o (propuesto) { requires2FA: true, challengeId } si el usuario tiene 2FA
+  // POST /api/auth/login → { accessToken, tokenType, expiresAt, requiresTwoFactor, challengeToken }
   async login(email, password) {
     const { data } = await axiosClient.post('/auth/login', { email, password })
-    if (data.requires2FA) {
-      return { requires2FA: true, challengeId: data.challengeId, email }
+    if (data.requiresTwoFactor) {
+      return {
+        requires2FA: true,
+        challengeId: data.challengeToken,
+        email,
+        expiresAt: data.expiresAt,
+      }
     }
     return buildSession(data.accessToken, data.expiresAt)
   },
 
-  // (propuesto) POST /api/auth/2fa/verify { challengeId, code } → { accessToken, expiresAt }
-  async verifyTwoFactor(challengeId, code) {
-    const { data } = await axiosClient.post('/auth/2fa/verify', { challengeId, code })
+  // POST /api/auth/2fa/verify { challengeToken, code } → { accessToken, expiresAt }
+  async verifyTwoFactor(challengeToken, code) {
+    const { data } = await axiosClient.post('/auth/2fa/verify', { challengeToken, code })
     return buildSession(data.accessToken, data.expiresAt)
   },
 
-  // (propuesto) POST /api/auth/2fa/resend { challengeId }
-  async resendTwoFactor(challengeId) {
-    await axiosClient.post('/auth/2fa/resend', { challengeId })
-    return {}
+  // El backend actual no expone un endpoint de reenvío. El código expira según
+  // TWO_FACTOR_CODE_DURATION_MINUTES y el usuario puede iniciar el login otra vez.
+  async resendTwoFactor() {
+    throw firebaseError(
+      'El reenvío de códigos todavía no está disponible. Inicia sesión nuevamente para solicitar otro código.',
+    )
   },
 
   // (propuesto) POST /api/auth/register { name, email, password } — público

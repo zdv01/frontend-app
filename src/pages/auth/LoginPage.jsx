@@ -74,6 +74,7 @@ export function LoginPage() {
           state: {
             challengeId: result.challengeId,
             email: result.email,
+            expiresAt: result.expiresAt,
             devCode: result.devCode,
             from: location.state?.from,
           },
