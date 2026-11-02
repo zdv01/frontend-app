@@ -28,7 +28,7 @@ export function ProfilePage() {
 
   const loader = useCallback(async () => {
     if (isOwn) {
-      return { person: null, roles: null, profile: await profileService.get(userId) }
+      return { person: null, roles: null, profile: await profileService.getMe() }
     }
     const [person, roles, profile] = await Promise.all([
       usersService.get(userId),
@@ -95,6 +95,7 @@ export function ProfilePage() {
             userId={userId}
             personName={person.name}
             initial={data.profile}
+            own={isOwn}
             onSaved={(profile) => (isOwn ? updateUser({ photo: profile.photo }) : reload())}
           />
           {isOwn && <TwoFactorCard />}

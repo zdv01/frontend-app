@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SESSION_EXPIRED_EVENT } from '../api/axiosClient'
 import { permissionKey } from '../constants/permissions'
 import { authService } from '../services'
@@ -8,6 +8,7 @@ import { AuthContext } from './AuthContext'
 export function AuthProvider({ children }) {
   // Al abrir la app se intenta recuperar la sesión guardada (si no expiró)
   const [session, setSession] = useState(() => loadSession())
+  const validatedToken = useRef(null)
   // true si el usuario cerró sesión a propósito (no por expiración): así el login
   // no lo devuelve a la página donde estaba el usuario anterior
   const [loggedOut, setLoggedOut] = useState(false)
@@ -95,6 +96,24 @@ export function AuthProvider({ children }) {
     const timer = setTimeout(endSession, Math.max(msLeft, 0))
     return () => clearTimeout(timer)
   }, [session, endSession])
+
+  // Valida la sesión contra el backend al restaurarla, incluida la revocación por logout.
+  useEffect(() => {
+    if (!session?.token || validatedToken.current === session.token) return undefined
+    validatedToken.current = session.token
+    let active = true
+    authService
+      .refreshSession(session)
+      .then((freshSession) => {
+        if (active) startSession(freshSession)
+      })
+      .catch((error) => {
+        if (active && error.response?.status === 401) endSession()
+      })
+    return () => {
+      active = false
+    }
+  }, [session, startSession, endSession])
 
   // Si axios recibe un 401, avisa con este evento y aquí se limpia la sesión
   useEffect(() => {

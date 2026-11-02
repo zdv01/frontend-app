@@ -7,7 +7,8 @@ El front ya funciona con datos simulados (`VITE_USE_MOCKS=true`). Para conectarl
 - Base URL usada por el front: `http://localhost:8181/api` (variable `VITE_API_URL`).
 - Origen del front en desarrollo: `http://localhost:5173`.
 
-Leyenda: ✅ ya existe en el backend · 🆕 hay que crearlo · ✏️ existe, pero hay que cambiarlo.
+El contrato fue verificado contra `ProyectoDesarrolloBackend`. El frontend
+normaliza las diferencias de nombres de los DTO en `src/services/mappers.js`.
 
 ---
 
@@ -22,9 +23,11 @@ Leyenda: ✅ ya existe en el backend · 🆕 hay que crearlo · ✏️ existe, p
 
 ---
 
-## 2. CORS (🆕, bloqueante)
+## 2. CORS (✅ implementado)
 
-Hoy no hay configuración de CORS, así que el navegador rechaza todas las peticiones del front. Además, la petición `OPTIONS` previa (preflight) pasa por `DynamicAuthorizationManager` y queda denegada. Propuesta para `SecurityConfig`:
+El backend ya configura CORS mediante `security.cors.allowed-origins`,
+permite `http://localhost:5173` por defecto y atiende el preflight antes de la
+autorización dinámica. Ver `SecurityConfig`.
 
 ```java
 @Bean
@@ -54,16 +57,16 @@ http.cors(Customizer.withDefaults())
 
 | | Método y URL | Petición | Respuesta esperada |
 |---|---|---|---|
-| ✏️ | `POST /auth/login` | `{ email, password }` | Sin 2FA: `{ accessToken, tokenType, expiresAt }` (como hoy). **Con 2FA activo:** `{ requires2FA: true, challengeId }` y **sin** token. Usuario deshabilitado: 403 con `message`. Credenciales malas: 401 `"Credenciales incorrectas"`. |
-| 🆕 | `GET /auth/me` | — (con Bearer) | `{ id, name, email, authProvider, twoFactorEnabled, photo, roles: [{id, name, description}], permissions: [{ id, url, method, model, resource?, operation? }] }`. `permissions` = **permisos efectivos** (unión de los permisos de todos sus roles). |
-| 🆕 | `POST /auth/2fa/verify` | `{ challengeId, code }` | `{ accessToken, tokenType, expiresAt }`. Código incorrecto o vencido: 401 con `message`. |
-| 🆕 | `POST /auth/2fa/resend` | `{ challengeId }` | 204. Genera un código nuevo y lo envía por `ms-notifications`. |
-| 🆕 | `PUT /auth/2fa` | `{ enabled: true \| false }` (con Bearer) | `{ twoFactorEnabled }`. Solo para usuarios `authProvider = "local"`; si no, 409. |
-| 🆕 | `POST /auth/register` | `{ name, email, password }` | 201 `{ id, name, email }`. Correo repetido: 409 `"El correo ya está registrado."` **Debe ser público** (hoy `POST /users` exige token). |
-| 🆕 | `POST /auth/forgot-password` | `{ email }` | **Siempre 204**, exista o no el correo. Solo envía el enlace a cuentas locales activas. |
-| 🆕 | `POST /auth/reset-password` | `{ token, password }` | 204. Token vencido o ya usado: 400 con `message`. Debe invalidar las sesiones anteriores. |
-| 🆕 | `POST /auth/logout` | — (con Bearer) | 204. El token deja de ser válido. |
-| 🆕 | `GET /auth/oauth/{provider}` | `provider` = `google`, `github` o `microsoft` | Redirige al proveedor. Al volver, el backend redirige a `http://localhost:5173/auth/callback?token=...&expiresAt=...`, o en caso de error a `?error=Mensaje en español`. |
+| ✅ | `POST /auth/login` | `{ email, password }` | `{ accessToken, tokenType, expiresAt, twoFactorRequired, challengeId }`; con 2FA no entrega token. |
+| ✅ | `GET /auth/me` | — (con Bearer) | Devuelve `photoUrl`, `roles: string[]`, permisos efectivos, `twoFactorEnabled` y `authMethod`. |
+| ✅ | `POST /auth/2fa/verify` | `{ challengeId, code }` | Devuelve una sesión activa. |
+| 🆕 | `POST /auth/2fa/resend` | `{ challengeId }` | Aún no existe; el frontend no lo ofrece en modo real. |
+| ✅ | `PUT /auth/2fa-settings` | `{ enabled: true \| false }` (con Bearer) | Responde `204`. Solo aplica a cuentas locales. |
+| ✅ | `POST /users` | `{ name, email, password }` | Registro público y creación administrativa según exista sesión. |
+| ✅ | `POST /auth/password-recovery` | `{ email }` | Responde `202` con mensaje genérico. |
+| ✅ | `POST /auth/password-reset` | `{ token, password }` | Responde `204`. |
+| ✅ | `POST /auth/logout` | — (con Bearer) | Responde `204` e invalida la sesión. |
+| ✅ | `POST /auth/oauth` | `{ idToken }` de Firebase | Intercambia el ID token por la sesión JWT del backend. |
 
 **Reglas de OAuth (HU-SE-08)**
 - **Primera vez:** se crea el usuario con los datos del proveedor.
@@ -72,7 +75,9 @@ http.cors(Customizer.withDefaults())
 
 **Enlace de recuperación:** el correo debe apuntar a `http://localhost:5173/reset-password?token=<token>`.
 
-> Mientras no exista `/auth/me`, el front arma la sesión con `GET /users/{id}` (id = `sub` del JWT), `GET /user-roles/users/{id}` y `GET /role-permissions/roles/{roleId}`. Por eso esos endpoints también deben estar permitidos para el usuario autenticado (ver sección 6).
+> El frontend usa `/auth/me` como fuente principal. Como el backend devuelve los
+> roles como nombres, consulta además `/user-roles/users/{id}` para recuperar
+> sus identificadores y conservar la navegación de administración.
 
 ---
 
@@ -84,14 +89,16 @@ http.cors(Customizer.withDefaults())
 | ✅ | `GET /users/{id}` | Perfil de otro usuario | — |
 | ✅ | `POST /users` | "Nuevo usuario" (admin) | — |
 | ✅ | `PUT /users/{id}` | Editar usuario | El front **no envía `password`** si no se cambia; hoy es opcional en `UpdateUserDTO`, así que funciona. |
-| 🆕 | `PATCH /users/{id}/status` | Activar/desactivar | `{ active }` → `UserResponseDTO`. HU-SE-01 pide desactivar en lugar de borrar. El front ya no usa `DELETE /users/{id}`. |
-| ✅ | `GET /users/{id}/profile` | Mi perfil / perfil de usuario | 404 si no tiene perfil: el front lo trata como "sin perfil" y luego hace POST. |
-| ✏️ | `POST` / `PUT /users/{id}/profile` | Guardar perfil | Envía `{ phone, birthDate, photo }`. Falta el campo **`photo`**: el front manda un *data URL* (`data:image/png;base64,...`) de hasta 1 MB, así que la columna debe ser `TEXT`/`LONGTEXT`. |
+| ✅ | `PUT /users/{id}/status` | Activar/desactivar | `{ active }` → `UserResponseDTO`. |
+| ✅ | `GET /profile/me` | Perfil propio | Devuelve `UserDetailResponseDTO` con `profile` anidado. |
+| ✅ | `GET /users/{id}/profile` | Perfil de otro usuario | Devuelve `UserDetailResponseDTO`. |
+| ✅ | `POST` / `PUT` `/users/{id}/profile` | Guardar perfil administrativo | Envía `{ phone, birthDate, photoUrl }`. |
+| ✅ | `PUT /profile/me` | Guardar perfil propio | Envía `{ phone, birthDate, photoUrl }`. |
 | ✅ | `GET /roles` · `GET /roles/{id}` | Roles, matriz, usuarios del rol | — |
-| ✏️ | `POST /roles` · `PUT /roles/{id}` | Formulario de rol | Envía `{ name, description, active }`. Falta `active` en `Role`. |
+| ✅ | `POST /roles` · `PUT /roles/{id}` | Formulario de rol | Envía `{ name, description }`. |
 | ✅ | `DELETE /roles/{id}` | Eliminar rol | Si tiene usuarios: 409 `"No se puede eliminar el rol porque tiene usuarios asignados."` (el front también lo verifica antes). |
 | ✅ | `GET /permissions` | Permisos y matriz | — |
-| ✏️ | `POST /permissions` · `PUT /permissions/{id}` | Formulario de permiso | Envía `{ url, method, model, resource, operation, active }` (ver nota abajo). |
+| ✅ | `POST /permissions` · `PUT /permissions/{id}` | Formulario de permiso | Envía `{ url, method, model }`; el frontend deduce recurso y operación para la matriz. |
 | ✅ | `DELETE /permissions/{id}` | Eliminar permiso | Debe retirar el permiso de los roles **sin borrar los roles**. |
 | ✅ | `GET /user-roles/users/{userId}` | Roles de un usuario | Respuesta `[{ id, userId, role }]`. |
 | ✅ | `GET /user-roles/roles/{roleId}` | Usuarios del rol | Respuesta `[{ id, roleId, user }]`. |
@@ -125,31 +132,30 @@ PUT /role-permissions/roles/{roleId}   { "permissionIds": [1, 2, 3] }
 | Entidad | Campo | Tipo | Para qué |
 |---|---|---|---|
 | `User` | `active` | boolean (por defecto `true`) | Desactivar usuarios; un usuario inactivo no puede iniciar sesión |
-| `User` | `authProvider` | `"local" \| "google" \| "github" \| "microsoft"` | Mostrar el método de acceso; 2FA y recuperación solo aplican a `local` |
+| `User` | `authMethod` | `"LOCAL" \| "OAUTH"` | El backend informa si la cuenta usa credenciales o un proveedor externo |
 | `User` | `twoFactorEnabled` | boolean | HU-SE-10 |
-| `Role` | `active` | boolean | Un rol inactivo no aporta permisos |
-| `Permission` | `active` | boolean | Un permiso inactivo no se puede asignar |
 | `Permission` | `operation` (y opcional `resource`) | string | Ver la sección 4 |
-| `Profile` | `photo` | texto largo (data URL) | HU-SE-02 |
+| `Profile` | `photoUrl` | texto largo (data URL) | HU-SE-02 |
 
 Si un campo no llega, el front usa estos valores por defecto: `active: true`, `authProvider: "local"`, `twoFactorEnabled: false`.
 
 ---
 
-## 6. Permisos que faltan crear al arrancar el backend (`DatabaseSeeder`)
+## 6. Permisos requeridos por el backend (`DatabaseSeeder`)
 
-`DynamicAuthorizationManager` exige un permiso para **cada** URL. Hoy el seeder solo crea el CRUD de `users`, `roles` y `permissions`, así que el administrador recibiría **403** en:
+`DynamicAuthorizationManager` exige un permiso para **cada** URL administrativa.
+Si el seeder no los crea, el administrador recibirá **403** en:
 
 - `GET/POST /api/user-roles`, `GET /api/user-roles/users/{id}`, `GET /api/user-roles/roles/{id}`, `DELETE /api/user-roles/{id}/{id}`
 - `GET/POST /api/role-permissions`, `GET /api/role-permissions/roles/{id}`, `GET /api/role-permissions/permissions/{id}`, `DELETE /api/role-permissions/{id}/{id}`
 - `GET /api/users/{id}/detail*`, `GET /api/roles/{id}/detail-with-permissions`
 - `GET/POST/PUT /api/users/{id}/profile`
-- `PATCH /api/users/{id}/status` (cuando exista)
+- `PUT /api/users/{id}/status`
 
 Ojo: `normalizeUrl` cambia **todos** los números por `{id}`, así que `/api/user-roles/5/2` queda como `/api/user-roles/{id}/{id}`. Los permisos sembrados deben usar esa forma.
 
 Además, **todo usuario autenticado** (sin importar su rol) debe poder usar estas rutas:
-- `/auth/me`, `/auth/logout` y `/auth/2fa`;
+- `/auth/me`, `/auth/logout` y `/auth/2fa-settings`;
 - el **perfil propio**, es decir, cuando el `{userId}` de la URL coincide con el `sub` del token.
 
 ---
@@ -158,6 +164,6 @@ Además, **todo usuario autenticado** (sin importar su rol) debe poder usar esta
 
 - **Contraseña:** el backend exige además un **carácter especial** (`@$!%*?&`) y no permite espacios. El front ya valida exactamente la misma regla, así que conviene no cambiarla sin avisar.
 - **Perfil:** `birthDate` es obligatorio en `ProfileRequestDTO`, así que el formulario de perfil lo pide. Si el equipo decide que no sea obligatorio, avisar para quitar el `*`.
-- **Login:** `AuthService.login` no revisa si el usuario está habilitado (falta el campo `active`).
-- **Sesiones:** `JwtService` no guarda la sesión en la tabla `sessions`. Para que el logout invalide el token (HU-SE-08), hay que guardarla y revisarla en cada petición, o mantener una lista de tokens revocados.
-- **Seguridad del repo:** `application.properties` tiene la contraseña real de MySQL subida a Git. Se recomienda usar una variable de entorno, como ya se hace con `JWT_SECRET`.
+- **Login:** el backend rechaza cuentas desactivadas antes de crear la sesión.
+- **Sesiones:** el backend invalida la sesión en logout y el frontend valida
+  `/auth/me` al restaurar una sesión guardada.

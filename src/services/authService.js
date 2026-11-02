@@ -64,7 +64,7 @@ async function buildSession(token, expiresAt, providerHint = 'local') {
 
   // El backend actual devuelve UserResponseDTO en /auth/me; en ese caso se
   // completan roles y permisos mediante las relaciones públicas.
-  if (!roles.length) {
+  if (!roles.length || roles.some((role) => !Number.isFinite(Number(role.id)))) {
     const { data: userRoles } = await axiosClient.get(`/user-roles/users/${userId}`, auth)
     roles = userRoles.map((userRole) => toRole(userRole.role))
   }
@@ -84,9 +84,9 @@ async function buildSession(token, expiresAt, providerHint = 'local') {
       id: user.id,
       name: user.name,
       email: user.email,
-      authProvider: user.authProvider ?? providerHint,
+      authProvider: (user.authMethod ?? user.authProvider ?? providerHint).toLowerCase(),
       twoFactorEnabled: user.twoFactorEnabled ?? false,
-      photo: user.photo ?? null,
+      photo: user.photoUrl ?? user.photo ?? null,
       roles,
     },
     permissions: [...new Set(permissions)],
@@ -94,13 +94,13 @@ async function buildSession(token, expiresAt, providerHint = 'local') {
 }
 
 const api = {
-  // POST /api/auth/login → { accessToken, tokenType, expiresAt, requiresTwoFactor, challengeToken }
+  // POST /api/auth/login → { accessToken, tokenType, expiresAt, twoFactorRequired, challengeId }
   async login(email, password) {
     const { data } = await axiosClient.post('/auth/login', { email, password })
-    if (data.requiresTwoFactor) {
+    if (data.twoFactorRequired) {
       return {
         requires2FA: true,
-        challengeId: data.challengeToken,
+        challengeId: data.challengeId,
         email,
         expiresAt: data.expiresAt,
       }
@@ -108,9 +108,9 @@ const api = {
     return buildSession(data.accessToken, data.expiresAt, 'local')
   },
 
-  // POST /api/auth/2fa/verify { challengeToken, code } → { accessToken, expiresAt }
-  async verifyTwoFactor(challengeToken, code) {
-    const { data } = await axiosClient.post('/auth/2fa/verify', { challengeToken, code })
+  // POST /api/auth/2fa/verify { challengeId, code } → { accessToken, expiresAt }
+  async verifyTwoFactor(challengeId, code) {
+    const { data } = await axiosClient.post('/auth/2fa/verify', { challengeId, code })
     return buildSession(data.accessToken, data.expiresAt, 'local')
   },
 
@@ -143,9 +143,9 @@ const api = {
     return {}
   },
 
-  // POST /api/auth/password-reset { token, newPassword }
+  // POST /api/auth/password-reset { token, password }
   async resetPassword(token, password) {
-    await axiosClient.post('/auth/password-reset', { token, newPassword: password })
+    await axiosClient.post('/auth/password-reset', { token, password })
   },
 
   // (propuesto) POST /api/auth/logout → invalida el token actual
@@ -167,11 +167,11 @@ const api = {
     try {
       result = await signInWithPopup(firebaseAuth, createProvider())
       const idToken = await getIdToken(result.user, true)
-      const { data } = await axiosClient.post('/auth/oauth/firebase', { idToken })
-      if (data.requiresTwoFactor ?? data.requires2FA) {
+      const { data } = await axiosClient.post('/auth/oauth', { idToken })
+      if (data.twoFactorRequired ?? data.requiresTwoFactor ?? data.requires2FA) {
         return {
           requires2FA: true,
-          challengeId: data.challengeToken ?? data.challengeId,
+          challengeId: data.challengeId ?? data.challengeToken,
           email: result.user.email,
         }
       }

@@ -8,7 +8,7 @@ import { profileService } from '../../services'
 import { getApiErrorMessage, getApiFieldErrors } from '../../utils/apiError'
 import { hasErrors } from '../../utils/validators'
 
-const MAX_PHOTO_BYTES = 1024 * 1024 // 1 MB
+const MAX_PHOTO_BYTES = 350 * 1024 // deja margen para el límite de 500000 caracteres del backend
 const TODAY = new Date().toISOString().slice(0, 10)
 
 function validate(form) {
@@ -29,7 +29,7 @@ function validate(form) {
 
 // Formulario del perfil: teléfono, fecha de nacimiento y fotografía.
 // Recibe los datos iniciales por props; el padre lo monta solo cuando ya cargaron.
-export function ProfileForm({ userId, personName, initial, onSaved }) {
+export function ProfileForm({ userId, personName, initial, own = false, onSaved }) {
   const toast = useToast()
   const [form, setForm] = useState({
     phone: initial?.phone ?? '',
@@ -56,7 +56,7 @@ export function ProfileForm({ userId, personName, initial, onSaved }) {
       return
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      setErrors((current) => ({ ...current, photo: 'La imagen no puede superar 1 MB.' }))
+      setErrors((current) => ({ ...current, photo: 'La imagen no puede superar 350 KB.' }))
       return
     }
     const reader = new FileReader()
@@ -76,7 +76,7 @@ export function ProfileForm({ userId, personName, initial, onSaved }) {
     setSaving(true)
     try {
       const data = { phone: form.phone.trim(), birthDate: form.birthDate, photoUrl: form.photo }
-      const saved = await profileService.save(userId, data, exists)
+      const saved = await profileService.save(userId, data, exists, own)
       setExists(true)
       toast.success('Perfil actualizado correctamente.')
       onSaved(saved)
@@ -118,7 +118,7 @@ export function ProfileForm({ userId, personName, initial, onSaved }) {
               <Trash2 size={18} /> Quitar foto
             </button>
           )}
-          <span className="field-hint">Imagen JPG, PNG o WebP de máximo 1 MB.</span>
+          <span className="field-hint">Imagen JPG, PNG o WebP de máximo 350 KB.</span>
           {errors.photo && <span className="field-error">{errors.photo}</span>}
         </div>
       </div>

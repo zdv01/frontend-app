@@ -23,31 +23,30 @@ const api = {
     return toUser(data)
   },
 
-  // PUT /api/users/{id} { name, email, password?, enabled? }
-  async update(id, { name, email, password, enabled }) {
+  // PUT /api/users/{id} { name, email, password? }
+  async update(id, { name, email, password }) {
     const body = {
       name,
       email,
       ...(password ? { password } : {}),
-      ...(typeof enabled === 'boolean' ? { enabled } : {}),
     }
     const { data } = await axiosClient.put(`/users/${id}`, body)
     return toUser(data)
   },
 
-  // El backend desactiva con DELETE y reactiva con PUT { enabled: true }.
+  // PUT /api/users/{id}/status { active }.
   async setActive(id, active) {
-    if (!active) {
-      await axiosClient.delete(`/users/${id}`)
-      return { ...(await api.get(id)), active: false }
-    }
-    const user = await api.get(id)
-    return api.update(id, { ...user, enabled: true })
+    const { data } = await axiosClient.put(`/users/${id}/status`, { active })
+    return toUser(data)
   },
 
   async listAvailableForRole(roleId) {
-    const { data } = await axiosClient.get(`/users/available-for-role/${roleId}`)
-    return data.map(toUser)
+    const [{ data: users }, { data: assigned }] = await Promise.all([
+      axiosClient.get('/users'),
+      axiosClient.get(`/user-roles/roles/${roleId}`),
+    ])
+    const assignedIds = new Set(assigned.map((roleUser) => roleUser.user?.id))
+    return users.map(toUser).filter((user) => !assignedIds.has(user.id))
   },
 }
 

@@ -33,7 +33,7 @@ axiosClient.interceptors.response.use(
       '/auth/login',
       '/auth/register',
       '/auth/2fa/verify',
-      '/auth/oauth/firebase',
+      '/auth/oauth',
     ].some((path) => url.startsWith(path))
     if (error.response?.status === 401 && !isCredentialRequest) {
       clearSession()

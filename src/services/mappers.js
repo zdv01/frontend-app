@@ -21,6 +21,9 @@ export function toUser(dto) {
 }
 
 export function toRole(dto) {
+  if (typeof dto === 'string') {
+    return { id: dto, name: dto, description: '', active: true }
+  }
   return {
     id: dto.id,
     name: dto.name,
@@ -56,6 +59,7 @@ export function toPermissionKey(dto) {
 }
 
 export function toProfile(dto) {
+  if (!dto) return null
   return {
     phone: dto.phone ?? '',
     birthDate: dto.birthDate ?? '',
