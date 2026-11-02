@@ -26,6 +26,11 @@ export async function list() {
   return clone(getDb().permissions)
 }
 
+export async function get(id) {
+  await delay()
+  return clone(findPermission(id))
+}
+
 export async function create(data) {
   await delay()
   ensureUnique(data)

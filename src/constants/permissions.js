@@ -20,6 +20,8 @@ export const MODULES = [
       { key: 'usuarios', label: 'Usuarios', model: 'User', path: '/api/users' },
       { key: 'roles', label: 'Roles', model: 'Role', path: '/api/roles' },
       { key: 'permisos', label: 'Permisos', model: 'Permission', path: '/api/permissions' },
+      { key: 'asignacion-roles', label: 'Asignación de Roles', model: 'UserRole', path: '/api/user-roles' },
+      { key: 'asignacion-permisos', label: 'Asignación de Permisos', model: 'RolePermission', path: '/api/role-permissions' },
     ],
   },
   {

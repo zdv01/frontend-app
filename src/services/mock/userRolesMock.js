@@ -1,6 +1,11 @@
 import { getDb, saveDb } from './mockDb'
 import { clone, conflict, delay, notFound } from './mockHttp'
 
+export async function list() {
+  await delay()
+  return clone(getDb().userRoles)
+}
+
 export async function listRolesByUser(userId) {
   await delay()
   const db = getDb()
@@ -14,6 +19,19 @@ export async function listUsersByRole(roleId) {
   const userIds = db.userRoles.filter((ur) => ur.roleId === Number(roleId)).map((ur) => ur.userId)
   return db.users
     .filter((user) => userIds.includes(user.id))
+    .map(({ id, name, email, authProvider, twoFactorEnabled, active }) =>
+      clone({ id, name, email, authProvider, twoFactorEnabled, active }),
+    )
+}
+
+export async function listAvailableUsersByRole(roleId) {
+  await delay()
+  const db = getDb()
+  const assignedUserIds = new Set(
+    db.userRoles.filter((ur) => ur.roleId === Number(roleId)).map((ur) => ur.userId),
+  )
+  return db.users
+    .filter((user) => !assignedUserIds.has(user.id))
     .map(({ id, name, email, authProvider, twoFactorEnabled, active }) =>
       clone({ id, name, email, authProvider, twoFactorEnabled, active }),
     )

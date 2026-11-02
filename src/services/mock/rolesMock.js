@@ -25,6 +25,21 @@ export async function get(id) {
   return clone(findRole(id))
 }
 
+export async function getWithPermissions(id) {
+  await delay()
+  const role = findRole(id)
+  const db = getDb()
+  const permissions = (db.rolePermissions || [])
+    .filter((rp) => rp.roleId === role.id)
+    .map((rp) => ({
+      id: rp.id,
+      roleId: rp.roleId,
+      permission: db.permissions.find((p) => p.id === rp.permissionId),
+    }))
+    .filter((rp) => rp.permission)
+  return { ...clone(role), permissions }
+}
+
 export async function create({ name, description, active = true }) {
   await delay()
   ensureUniqueName(name)

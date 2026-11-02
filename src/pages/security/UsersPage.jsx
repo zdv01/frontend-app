@@ -1,4 +1,4 @@
-import { Eye, Pencil, Plus, UserRoundCheck, UserRoundX } from 'lucide-react'
+import { Eye, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { ActionButton } from '../../components/ActionButton'
 import { Avatar } from '../../components/Avatar'
@@ -17,7 +17,7 @@ import { matchesSearch, matchesStatus } from '../../utils/format'
 import { UserDetailPanel } from './UserDetailPanel'
 import { UserFormModal } from './UserFormModal'
 
-// HU-SE-01: gestionar usuarios (listar, registrar, ver, editar, activar/desactivar)
+// HU-SE-01: gestionar usuarios (listar, registrar, ver, editar, eliminar/activar/desactivar)
 export function UsersPage() {
   const { user: currentUser, can, updateUser } = useAuth()
   const toast = useToast()
@@ -32,6 +32,8 @@ export function UsersPage() {
   const [form, setForm] = useState(null)
   const [toggleTarget, setToggleTarget] = useState(null)
   const [toggling, setToggling] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const filtered = useMemo(
     () =>
@@ -64,6 +66,21 @@ export function UsersPage() {
     } finally {
       setToggling(false)
       setToggleTarget(null)
+    }
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await usersService.remove(deleteTarget.id)
+      toast.success('Usuario eliminado correctamente.')
+      if (selectedId === deleteTarget.id) setSelectedId(null)
+      reload()
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'No se pudo eliminar el usuario.'))
+    } finally {
+      setDeleting(false)
+      setDeleteTarget(null)
     }
   }
 
@@ -113,13 +130,11 @@ export function UsersPage() {
             )}
             {can('usuarios', 'eliminar') && (
               <ActionButton
-                icon={u.active ? UserRoundX : UserRoundCheck}
-                label={
-                  isSelf ? 'No puedes desactivar tu propia cuenta' : u.active ? 'Desactivar' : 'Activar'
-                }
-                variant={u.active ? 'danger' : 'success'}
+                icon={Trash2}
+                label={isSelf ? 'No puedes eliminar tu propia cuenta' : 'Eliminar usuario'}
+                variant="danger"
                 disabled={isSelf}
-                onClick={() => setToggleTarget(u)}
+                onClick={() => setDeleteTarget(u)}
               />
             )}
           </div>
@@ -167,6 +182,23 @@ export function UsersPage() {
 
       {form && (
         <UserFormModal user={form.user} onClose={() => setForm(null)} onSaved={handleSaved} />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Eliminar usuario"
+          danger
+          confirmLabel="Eliminar"
+          loading={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+          message={
+            <p>
+              ¿Estás seguro de que deseas eliminar a <strong>{deleteTarget.name}</strong>? Se
+              eliminarán sus datos y asignaciones de roles. Esta acción no se puede deshacer.
+            </p>
+          }
+        />
       )}
 
       {toggleTarget && (

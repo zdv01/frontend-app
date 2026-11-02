@@ -3,8 +3,14 @@ import { env } from '../config/env'
 import { toRole, toUser } from './mappers'
 import * as mock from './mock/userRolesMock'
 
-// Asignación de roles a usuarios (HU-SE-04)
+// Asignación de roles a usuarios (HU-SE-04) - Conectado con UserRoleController
 const api = {
+  // GET /api/user-roles
+  async list() {
+    const { data } = await axiosClient.get('/user-roles')
+    return data
+  },
+
   // GET /api/user-roles/users/{userId} → [{ id, userId, role }]
   async listRolesByUser(userId) {
     const { data } = await axiosClient.get(`/user-roles/users/${userId}`)
@@ -17,9 +23,16 @@ const api = {
     return data.map((roleUser) => toUser(roleUser.user))
   },
 
+  // GET /api/user-roles/roles/{roleId}/available-users → [{ id, name, email }]
+  async listAvailableUsersByRole(roleId) {
+    const { data } = await axiosClient.get(`/user-roles/roles/${roleId}/available-users`)
+    return data.map(toUser)
+  },
+
   // POST /api/user-roles { userId, roleId }
   async assign(userId, roleId) {
-    await axiosClient.post('/user-roles', { userId, roleId })
+    const { data } = await axiosClient.post('/user-roles', { userId, roleId })
+    return data
   },
 
   // DELETE /api/user-roles/{userId}/{roleId}

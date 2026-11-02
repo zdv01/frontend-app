@@ -1,4 +1,3 @@
-
 import { axiosClient } from '../api/axiosClient'
 import {
   GithubAuthProvider,
@@ -13,7 +12,7 @@ import { toPermissionKey, toRole } from './mappers'
 import * as mock from './mock/authMock'
 
 /*
- * Autenticación (HU-SE-07, 08, 09, 10).
+ * Autenticación (HU-SE-07, 08, 09, 10) - Conectado con AuthController.
  * Todas las funciones que inician sesión devuelven el mismo formato:
  * { token, expiresAt, user: { id, name, email, authProvider, twoFactorEnabled, photo, roles },
  *   permissions: ['usuarios:ver', ...] }
@@ -28,9 +27,17 @@ function decodeJwt(token) {
 }
 
 const firebaseProviders = {
-  google: () => new GoogleAuthProvider(),
+  google: () => {
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({ prompt: 'select_account' })
+    return provider
+  },
   github: () => new GithubAuthProvider(),
-  microsoft: () => new OAuthProvider('microsoft.com'),
+  microsoft: () => {
+    const provider = new OAuthProvider('microsoft.com')
+    provider.setCustomParameters({ prompt: 'select_account' })
+    return provider
+  },
 }
 
 function firebaseError(message) {
@@ -54,27 +61,42 @@ function getFirebaseErrorMessage(error) {
 async function buildSession(token, expiresAt, providerHint = 'local') {
   const auth = { headers: { Authorization: `Bearer ${token}` } }
 
-  const { data: currentUser } = await axiosClient.get('/auth/me', auth)
-  const userId = Number(currentUser.id ?? decodeJwt(token).sub)
-  const user = currentUser.id
+  let currentUser
+  try {
+    const res = await axiosClient.get('/auth/me', auth)
+    currentUser = res.data
+  } catch (error) {
+    if (error.response?.status !== 404) throw error
+    currentUser = {}
+  }
+
+  const userId = Number(currentUser?.id ?? decodeJwt(token).sub)
+  const user = currentUser?.id
     ? currentUser
     : (await axiosClient.get(`/users/${userId}`, auth)).data
-  let roles = (currentUser.roles ?? []).map(toRole)
-  let permissions = (currentUser.permissions ?? []).map(toPermissionKey)
+  let roles = (currentUser?.roles ?? []).map(toRole)
+  let permissions = (currentUser?.permissions ?? []).map(toPermissionKey)
 
-  // El backend actual devuelve UserResponseDTO en /auth/me; en ese caso se
-  // completan roles y permisos mediante las relaciones públicas.
+  // Si /auth/me devuelve datos sin roles o permisos, se completan mediante las relaciones
   if (!roles.length || roles.some((role) => !Number.isFinite(Number(role.id)))) {
-    const { data: userRoles } = await axiosClient.get(`/user-roles/users/${userId}`, auth)
-    roles = userRoles.map((userRole) => toRole(userRole.role))
+    try {
+      const { data: userRoles } = await axiosClient.get(`/user-roles/users/${userId}`, auth)
+      roles = userRoles.map((userRole) => toRole(userRole.role))
+    } catch {
+      roles = []
+    }
   }
-  if (!permissions.length) {
-    const rolePermissions = await Promise.all(
-      roles.map((role) => axiosClient.get(`/role-permissions/roles/${role.id}`, auth)),
-    )
-    permissions = rolePermissions.flatMap(({ data }) =>
-      data.map((rolePermission) => toPermissionKey(rolePermission.permission)),
-    )
+  if (!permissions.length && roles.length) {
+    try {
+      const rolePermissions = await Promise.all(
+        roles.map((role) => axiosClient.get(`/role-permissions/roles/${role.id}`, auth)),
+      )
+      permissions = rolePermissions.flatMap(({ data }) =>
+        data.map((rolePermission) => toPermissionKey(rolePermission.permission)),
+      )
+    } catch {
+      permissions = []
+    }
   }
 
   return {
@@ -97,10 +119,10 @@ const api = {
   // POST /api/auth/login → { accessToken, tokenType, expiresAt, twoFactorRequired, challengeId }
   async login(email, password) {
     const { data } = await axiosClient.post('/auth/login', { email, password })
-    if (data.twoFactorRequired) {
+    if (data.twoFactorRequired || data.requiresTwoFactor || data.requires2FA) {
       return {
         requires2FA: true,
-        challengeId: data.challengeId,
+        challengeId: data.challengeId ?? data.challengeToken,
         email,
         expiresAt: data.expiresAt,
       }
@@ -110,12 +132,16 @@ const api = {
 
   // POST /api/auth/2fa/verify { challengeId, code } → { accessToken, expiresAt }
   async verifyTwoFactor(challengeId, code) {
-    const { data } = await axiosClient.post('/auth/2fa/verify', { challengeId, code })
+    const { data } = await axiosClient.post('/auth/2fa/verify', {
+      challengeId,
+      challengeToken: challengeId,
+      code,
+    })
     return buildSession(data.accessToken, data.expiresAt, 'local')
   },
 
   // El backend actual no expone un endpoint de reenvío. El código expira según
-  // TWO_FACTOR_CODE_DURATION_MINUTES y el usuario puede iniciar el login otra vez.
+  // el tiempo configurado y el usuario puede iniciar el login otra vez.
   async resendTwoFactor() {
     throw firebaseError(
       'El reenvío de códigos todavía no está disponible. Inicia sesión nuevamente para solicitar otro código.',
@@ -135,22 +161,41 @@ const api = {
     try {
       await axiosClient.post('/auth/password-recovery', { email })
     } catch (error) {
-      // El contrato no revela si el correo existe; algunas versiones del backend
-      // todavía responden 401 para cuentas inexistentes o OAuth.
-      if ([400, 401, 404].includes(error.response?.status)) return {}
-      throw error
+      if (error.response?.status === 404) {
+        try {
+          await axiosClient.post('/auth/forgot-password', { email })
+        } catch {
+          return {}
+        }
+      } else if ([400, 401].includes(error.response?.status)) {
+        return {}
+      } else {
+        throw error
+      }
     }
     return {}
   },
 
   // POST /api/auth/password-reset { token, password }
   async resetPassword(token, password) {
-    await axiosClient.post('/auth/password-reset', { token, password })
+    try {
+      await axiosClient.post('/auth/password-reset', { token, password, newPassword: password })
+    } catch (error) {
+      if (error.response?.status === 404) {
+        await axiosClient.post('/auth/reset-password', { token, password, newPassword: password })
+      } else {
+        throw error
+      }
+    }
   },
 
-  // (propuesto) POST /api/auth/logout → invalida el token actual
+  // POST /api/auth/logout → invalida el token actual
   async logout() {
-    await axiosClient.post('/auth/logout')
+    try {
+      await axiosClient.post('/auth/logout')
+    } catch {
+      // Ignorar error si ya estaba deslogueado
+    }
   },
 
   // Firebase autentica al usuario; el backend recibe el ID token y devuelve su JWT.
@@ -167,7 +212,18 @@ const api = {
     try {
       result = await signInWithPopup(firebaseAuth, createProvider())
       const idToken = await getIdToken(result.user, true)
-      const { data } = await axiosClient.post('/auth/oauth', { idToken })
+      let data
+      try {
+        const response = await axiosClient.post('/auth/oauth', { idToken })
+        data = response.data
+      } catch (err) {
+        if (err.response?.status === 404) {
+          const response = await axiosClient.post('/auth/oauth/firebase', { idToken })
+          data = response.data
+        } else {
+          throw err
+        }
+      }
       if (data.twoFactorRequired ?? data.requiresTwoFactor ?? data.requires2FA) {
         return {
           requires2FA: true,
@@ -180,6 +236,11 @@ const api = {
       if (error.response) throw error
       throw firebaseError(getFirebaseErrorMessage(error))
     }
+  },
+
+  // GET /api/auth/oauth/{provider}
+  getOAuthUrl(provider) {
+    return `${env.apiUrl}/auth/oauth/${provider}`
   },
 
   // El backend vuelve a /auth/callback?token=...&expiresAt=... o ?error=...

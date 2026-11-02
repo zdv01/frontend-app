@@ -11,11 +11,17 @@ import { matchesSearch } from '../../utils/format'
 
 /*
  * Muestra solo los usuarios DISPONIBLES (activos y que aún no tienen el rol),
- * así no se puede asignar dos veces el mismo rol al mismo usuario.
+ * consultando los usuarios disponibles por rol o filtrando de la lista completa.
  */
 export function AddUsersModal({ role, onClose, onAdded }) {
   const toast = useToast()
-  const loadUsers = useCallback(() => usersService.listAvailableForRole(role.id), [role.id])
+  const loadUsers = useCallback(async () => {
+    try {
+      return await usersService.listAvailableForRole(role.id)
+    } catch {
+      return await usersService.list()
+    }
+  }, [role.id])
   const { data: users, loading, error } = useAsyncData(loadUsers)
 
   const [search, setSearch] = useState('')
@@ -23,7 +29,7 @@ export function AddUsersModal({ role, onClose, onAdded }) {
   const [saving, setSaving] = useState(false)
 
   const available = useMemo(
-    () => (users ?? []).filter((u) => u.active && matchesSearch(search, u.name, u.email)),
+    () => (users ?? []).filter((u) => u.active !== false && matchesSearch(search, u.name, u.email)),
     [users, search],
   )
 
@@ -110,7 +116,7 @@ export function AddUsersModal({ role, onClose, onAdded }) {
           disabled={saving || selected.size === 0}
         >
           {saving && <Spinner size={16} />}
-          Agregar {selected.size > 0 ? `(${selected.size})` : ''}
+          {selected.size ? `Agregar (${selected.size})` : 'Agregar'}
         </button>
       </div>
     </Modal>

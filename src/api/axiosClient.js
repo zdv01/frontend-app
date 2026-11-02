@@ -12,11 +12,21 @@ export const axiosClient = axios.create({
   timeout: 15000,
 })
 
-// Antes de cada petición: si hay token guardado, se agrega el encabezado Authorization.
-// Si la petición ya trae uno (por ejemplo justo después del login), se respeta.
+// Antes de cada petición: si hay token guardado, se agrega el encabezado Authorization,
+// excepto en rutas públicas de autenticación donde un token viejo/expirado causaría 401.
 axiosClient.interceptors.request.use((config) => {
   const token = getToken()
-  if (token && !config.headers.Authorization) {
+  const url = config.url ?? ''
+  const isPublicAuth = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/2fa/verify',
+    '/auth/oauth',
+    '/auth/password-recovery',
+    '/auth/password-reset',
+  ].some((path) => url.startsWith(path))
+
+  if (token && !config.headers.Authorization && !isPublicAuth) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
@@ -34,6 +44,8 @@ axiosClient.interceptors.response.use(
       '/auth/register',
       '/auth/2fa/verify',
       '/auth/oauth',
+      '/auth/password-recovery',
+      '/auth/password-reset',
     ].some((path) => url.startsWith(path))
     if (error.response?.status === 401 && !isCredentialRequest) {
       clearSession()

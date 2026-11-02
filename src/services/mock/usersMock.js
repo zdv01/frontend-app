@@ -39,6 +39,21 @@ export async function get(id) {
   return toPublic(findUser(id))
 }
 
+export async function getDetail(id) {
+  return get(id)
+}
+
+export async function getWithRoles(id) {
+  await delay()
+  const user = findUser(id)
+  const db = getDb()
+  const roles = (db.userRoles || [])
+    .filter((ur) => ur.userId === user.id)
+    .map((ur) => db.roles.find((r) => r.id === ur.roleId))
+    .filter(Boolean)
+  return { ...user, roles }
+}
+
 export async function create({ name, email, password }) {
   await delay()
   ensureUniqueEmail(email)
@@ -66,6 +81,17 @@ export async function update(id, { name, email, password }) {
   if (password) user.password = password
   saveDb()
   return toPublic(user)
+}
+
+export async function remove(id) {
+  await delay()
+  const db = getDb()
+  const index = db.users.findIndex((u) => u.id === Number(id))
+  if (index === -1) throw notFound('Usuario no encontrado')
+  db.users.splice(index, 1)
+  db.userRoles = (db.userRoles || []).filter((ur) => ur.userId !== Number(id))
+  db.sessions = (db.sessions || []).filter((s) => s.userId !== Number(id))
+  saveDb()
 }
 
 // Desactivar en lugar de borrar: los roles y permisos del sistema no se tocan
