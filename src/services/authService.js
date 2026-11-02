@@ -169,7 +169,7 @@ const api = {
     let result
     try {
       result = await signInWithPopup(firebaseAuth, createProvider())
-      const idToken = await getIdToken(result.user)
+      const idToken = await getIdToken(result.user, true)
       const { data } = await axiosClient.post('/auth/oauth/firebase', { idToken })
       if (data.requiresTwoFactor ?? data.requires2FA) {
         return {
