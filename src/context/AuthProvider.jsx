@@ -41,6 +41,14 @@ export function AuthProvider({ children }) {
     [startSession],
   )
 
+  const register = useCallback(
+    async (data) => {
+      const result = await authService.register(data)
+      return result?.token ? startSession(result) : result
+    },
+    [startSession],
+  )
+
   const verifyTwoFactor = useCallback(
     async (challengeId, code) => startSession(await authService.verifyTwoFactor(challengeId, code)),
     [startSession],
@@ -104,6 +112,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(session),
       loggedOut,
       login,
+      register,
       loginWithOAuth,
       verifyTwoFactor,
       completeOAuth,
@@ -117,6 +126,7 @@ export function AuthProvider({ children }) {
     session,
     loggedOut,
     login,
+    register,
     loginWithOAuth,
     verifyTwoFactor,
     completeOAuth,

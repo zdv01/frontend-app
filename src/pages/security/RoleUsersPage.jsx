@@ -164,7 +164,6 @@ export function RoleUsersPage() {
       {adding && role && (
         <AddUsersModal
           role={role}
-          assignedIds={(users ?? []).map((u) => u.id)}
           onClose={() => setAdding(false)}
           onAdded={async (addedIds) => {
             setAdding(false)

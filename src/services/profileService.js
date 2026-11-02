@@ -16,15 +16,19 @@ const api = {
     }
   },
 
-  // POST (crear) o PUT (actualizar) /api/users/{userId}/profile { phone, birthDate, photo }
-  // "photo" es un campo propuesto para el backend
+  // POST (crear) o PUT (actualizar) /api/users/{userId}/profile { phone, birthDate, photoUrl }
   async save(userId, profile, exists) {
     const request = exists ? axiosClient.put : axiosClient.post
-    const { data } = await request(`/users/${userId}/profile`, profile)
+    const payload = {
+      phone: profile.phone,
+      birthDate: profile.birthDate,
+      photoUrl: profile.photoUrl ?? profile.photo ?? null,
+    }
+    const { data } = await request(`/users/${userId}/profile`, payload)
     return toProfile(data)
   },
 
-  // (propuesto) PUT /api/auth/2fa { enabled } — siempre sobre el usuario autenticado
+  // PUT /api/auth/2fa { enabled } — siempre sobre el usuario autenticado
   async setTwoFactor(_userId, enabled) {
     const { data } = await axiosClient.put('/auth/2fa', { enabled })
     return { twoFactorEnabled: data?.twoFactorEnabled ?? enabled }

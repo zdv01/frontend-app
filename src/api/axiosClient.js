@@ -24,12 +24,18 @@ axiosClient.interceptors.request.use((config) => {
 
 // Después de cada respuesta: si el backend dice 401 (token inválido o expirado),
 // se borra la sesión y se avisa a la app para que vuelva al login.
-// Las rutas /auth/ se excluyen: ahí un 401 significa "credenciales o código incorrectos".
+// Solo se excluyen los endpoints de credenciales; /auth/me debe invalidar la sesión.
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isAuthRequest = error.config?.url?.startsWith('/auth/')
-    if (error.response?.status === 401 && !isAuthRequest) {
+    const url = error.config?.url ?? ''
+    const isCredentialRequest = [
+      '/auth/login',
+      '/auth/register',
+      '/auth/2fa/verify',
+      '/auth/oauth/firebase',
+    ].some((path) => url.startsWith(path))
+    if (error.response?.status === 401 && !isCredentialRequest) {
       clearSession()
       window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
     }

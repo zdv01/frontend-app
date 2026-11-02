@@ -17,15 +17,15 @@ const api = {
     return toRole(data)
   },
 
-  // POST /api/roles { name, description, active }
-  async create(role) {
-    const { data } = await axiosClient.post('/roles', role)
+  // POST /api/roles { name, description }
+  async create({ name, description }) {
+    const { data } = await axiosClient.post('/roles', { name, description })
     return toRole(data)
   },
 
-  // PUT /api/roles/{id} { name, description, active }
-  async update(id, role) {
-    const { data } = await axiosClient.put(`/roles/${id}`, role)
+  // PUT /api/roles/{id} { name, description }
+  async update(id, { name, description }) {
+    const { data } = await axiosClient.put(`/roles/${id}`, { name, description })
     return toRole(data)
   },
 

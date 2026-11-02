@@ -17,8 +17,8 @@ import * as mock from './mock/authMock'
  * Todas las funciones que inician sesión devuelven el mismo formato:
  * { token, expiresAt, user: { id, name, email, authProvider, twoFactorEnabled, photo, roles },
  *   permissions: ['usuarios:ver', ...] }
- * Los endpoints marcados con (propuesto) todavía no existen en el backend:
- * ver docs/contrato-api-frontend.md
+ * Los nombres de los campos se normalizan aquí para que las pantallas no dependan
+ * de las diferencias entre los DTO públicos del backend.
  */
 
 // Lee el contenido (payload) de un JWT sin validarlo; la validación la hace el backend
@@ -51,43 +51,31 @@ function getFirebaseErrorMessage(error) {
 }
 
 // Con el token recién emitido, pide al backend quién es el usuario y qué puede hacer
-async function buildSession(token, expiresAt) {
+async function buildSession(token, expiresAt, providerHint = 'local') {
   const auth = { headers: { Authorization: `Bearer ${token}` } }
 
-  try {
-    // (propuesto) GET /api/auth/me → usuario + roles + permisos efectivos
-    const { data } = await axiosClient.get('/auth/me', auth)
-    return {
-      token,
-      expiresAt,
-      user: {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        authProvider: data.authProvider ?? 'local',
-        twoFactorEnabled: data.twoFactorEnabled ?? false,
-        photo: data.photo ?? null,
-        roles: (data.roles ?? []).map(toRole),
-      },
-      permissions: [...new Set((data.permissions ?? []).map(toPermissionKey))],
-    }
-  } catch (error) {
-    if (error.response?.status !== 404) throw error
-  }
+  const { data: currentUser } = await axiosClient.get('/auth/me', auth)
+  const userId = Number(currentUser.id ?? decodeJwt(token).sub)
+  const user = currentUser.id
+    ? currentUser
+    : (await axiosClient.get(`/users/${userId}`, auth)).data
+  let roles = (currentUser.roles ?? []).map(toRole)
+  let permissions = (currentUser.permissions ?? []).map(toPermissionKey)
 
-  // Respaldo mientras no exista /auth/me: se arma con los endpoints que ya existen
-  const userId = Number(decodeJwt(token).sub)
-  const [{ data: user }, { data: userRoles }] = await Promise.all([
-    axiosClient.get(`/users/${userId}`, auth),
-    axiosClient.get(`/user-roles/users/${userId}`, auth),
-  ])
-  const roles = userRoles.map((userRole) => toRole(userRole.role))
-  const rolePermissions = await Promise.all(
-    roles.map((role) => axiosClient.get(`/role-permissions/roles/${role.id}`, auth)),
-  )
-  const permissions = rolePermissions.flatMap(({ data }) =>
-    data.map((rolePermission) => toPermissionKey(rolePermission.permission)),
-  )
+  // El backend actual devuelve UserResponseDTO en /auth/me; en ese caso se
+  // completan roles y permisos mediante las relaciones públicas.
+  if (!roles.length) {
+    const { data: userRoles } = await axiosClient.get(`/user-roles/users/${userId}`, auth)
+    roles = userRoles.map((userRole) => toRole(userRole.role))
+  }
+  if (!permissions.length) {
+    const rolePermissions = await Promise.all(
+      roles.map((role) => axiosClient.get(`/role-permissions/roles/${role.id}`, auth)),
+    )
+    permissions = rolePermissions.flatMap(({ data }) =>
+      data.map((rolePermission) => toPermissionKey(rolePermission.permission)),
+    )
+  }
 
   return {
     token,
@@ -96,9 +84,9 @@ async function buildSession(token, expiresAt) {
       id: user.id,
       name: user.name,
       email: user.email,
-      authProvider: user.authProvider ?? 'local',
+      authProvider: user.authProvider ?? providerHint,
       twoFactorEnabled: user.twoFactorEnabled ?? false,
-      photo: null,
+      photo: user.photo ?? null,
       roles,
     },
     permissions: [...new Set(permissions)],
@@ -117,13 +105,13 @@ const api = {
         expiresAt: data.expiresAt,
       }
     }
-    return buildSession(data.accessToken, data.expiresAt)
+    return buildSession(data.accessToken, data.expiresAt, 'local')
   },
 
   // POST /api/auth/2fa/verify { challengeToken, code } → { accessToken, expiresAt }
   async verifyTwoFactor(challengeToken, code) {
     const { data } = await axiosClient.post('/auth/2fa/verify', { challengeToken, code })
-    return buildSession(data.accessToken, data.expiresAt)
+    return buildSession(data.accessToken, data.expiresAt, 'local')
   },
 
   // El backend actual no expone un endpoint de reenvío. El código expira según
@@ -134,21 +122,30 @@ const api = {
     )
   },
 
-  // (propuesto) POST /api/auth/register { name, email, password } — público
+  // POST /api/auth/register { name, email, password } — público
   async register(data) {
-    const { data: user } = await axiosClient.post('/auth/register', data)
-    return user
+    const { data: response } = await axiosClient.post('/auth/register', data)
+    return response.accessToken
+      ? buildSession(response.accessToken, response.expiresAt)
+      : response
   },
 
-  // (propuesto) POST /api/auth/forgot-password { email } → 204 siempre
+  // POST /api/auth/password-recovery { email } → 204 siempre
   async forgotPassword(email) {
-    await axiosClient.post('/auth/forgot-password', { email })
+    try {
+      await axiosClient.post('/auth/password-recovery', { email })
+    } catch (error) {
+      // El contrato no revela si el correo existe; algunas versiones del backend
+      // todavía responden 401 para cuentas inexistentes o OAuth.
+      if ([400, 401, 404].includes(error.response?.status)) return {}
+      throw error
+    }
     return {}
   },
 
-  // (propuesto) POST /api/auth/reset-password { token, password }
+  // POST /api/auth/password-reset { token, newPassword }
   async resetPassword(token, password) {
-    await axiosClient.post('/auth/reset-password', { token, password })
+    await axiosClient.post('/auth/password-reset', { token, newPassword: password })
   },
 
   // (propuesto) POST /api/auth/logout → invalida el token actual
@@ -178,7 +175,7 @@ const api = {
           email: result.user.email,
         }
       }
-      return buildSession(data.accessToken, data.expiresAt)
+      return buildSession(data.accessToken, data.expiresAt, providerName)
     } catch (error) {
       if (error.response) throw error
       throw firebaseError(getFirebaseErrorMessage(error))
@@ -197,11 +194,11 @@ const api = {
       error.response = { status: 400, data: { message: 'No se recibió el token de acceso.' } }
       throw error
     }
-    return buildSession(params.token, params.expiresAt)
+    return buildSession(params.token, params.expiresAt, params.mockProvider ?? 'local')
   },
 
   async refreshSession(session) {
-    return buildSession(session.token, session.expiresAt)
+    return buildSession(session.token, session.expiresAt, session.user?.authProvider ?? 'local')
   },
 }
 

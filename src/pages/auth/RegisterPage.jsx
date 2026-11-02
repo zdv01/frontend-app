@@ -4,7 +4,7 @@ import { Alert } from '../../components/Alert'
 import { FormField } from '../../components/FormField'
 import { PasswordChecklist, PasswordInput } from '../../components/PasswordInput'
 import { Spinner } from '../../components/Spinner'
-import { authService } from '../../services'
+import { useAuth } from '../../hooks/useAuth'
 import { getApiErrorCase, getApiErrorMessage, getApiFieldErrors } from '../../utils/apiError'
 import {
   hasErrors,
@@ -29,6 +29,7 @@ function validate(form) {
 
 // HU-SE-07: registrarse con nombre, correo y contraseña
 export function RegisterPage() {
+  const { register } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [errors, setErrors] = useState({})
@@ -50,15 +51,19 @@ export function RegisterPage() {
     setSubmitting(true)
     setFormError('')
     try {
-      await authService.register({
+      const result = await register({
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
       })
-      navigate('/login', {
-        replace: true,
-        state: { notice: 'Cuenta creada correctamente. Ya puedes iniciar sesión.' },
-      })
+      if (result?.token) {
+        navigate('/dashboard', { replace: true })
+      } else {
+        navigate('/login', {
+          replace: true,
+          state: { notice: 'Cuenta creada correctamente. Ya puedes iniciar sesión.' },
+        })
+      }
     } catch (err) {
       if (getApiErrorCase(err) === 'ALREADY_EXISTS') {
         setErrors({ email: 'El correo ya está registrado.' })

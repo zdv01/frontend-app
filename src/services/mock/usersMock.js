@@ -25,6 +25,15 @@ export async function list() {
   return getDb().users.map(toPublic)
 }
 
+export async function listAvailableForRole(roleId) {
+  await delay()
+  const db = getDb()
+  const assignedIds = new Set(
+    db.userRoles.filter((userRole) => userRole.roleId === Number(roleId)).map((userRole) => userRole.userId),
+  )
+  return db.users.filter((user) => user.active && !assignedIds.has(user.id)).map(toPublic)
+}
+
 export async function get(id) {
   await delay()
   return toPublic(findUser(id))

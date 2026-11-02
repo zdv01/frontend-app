@@ -13,9 +13,9 @@ import { matchesSearch } from '../../utils/format'
  * Muestra solo los usuarios DISPONIBLES (activos y que aún no tienen el rol),
  * así no se puede asignar dos veces el mismo rol al mismo usuario.
  */
-export function AddUsersModal({ role, assignedIds, onClose, onAdded }) {
+export function AddUsersModal({ role, onClose, onAdded }) {
   const toast = useToast()
-  const loadUsers = useCallback(() => usersService.list(), [])
+  const loadUsers = useCallback(() => usersService.listAvailableForRole(role.id), [role.id])
   const { data: users, loading, error } = useAsyncData(loadUsers)
 
   const [search, setSearch] = useState('')
@@ -23,11 +23,8 @@ export function AddUsersModal({ role, assignedIds, onClose, onAdded }) {
   const [saving, setSaving] = useState(false)
 
   const available = useMemo(
-    () =>
-      (users ?? []).filter(
-        (u) => u.active && !assignedIds.includes(u.id) && matchesSearch(search, u.name, u.email),
-      ),
-    [users, assignedIds, search],
+    () => (users ?? []).filter((u) => u.active && matchesSearch(search, u.name, u.email)),
+    [users, search],
   )
 
   const toggle = (userId) => {

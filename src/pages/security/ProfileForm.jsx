@@ -75,7 +75,7 @@ export function ProfileForm({ userId, personName, initial, onSaved }) {
 
     setSaving(true)
     try {
-      const data = { phone: form.phone.trim(), birthDate: form.birthDate, photo: form.photo }
+      const data = { phone: form.phone.trim(), birthDate: form.birthDate, photoUrl: form.photo }
       const saved = await profileService.save(userId, data, exists)
       setExists(true)
       toast.success('Perfil actualizado correctamente.')

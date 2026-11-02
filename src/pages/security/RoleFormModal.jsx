@@ -3,7 +3,6 @@ import { Alert } from '../../components/Alert'
 import { FormField } from '../../components/FormField'
 import { Modal } from '../../components/Modal'
 import { Spinner } from '../../components/Spinner'
-import { Switch } from '../../components/Switch'
 import { useToast } from '../../hooks/useToast'
 import { rolesService } from '../../services'
 import { getApiErrorCase, getApiErrorMessage, getApiFieldErrors } from '../../utils/apiError'
@@ -27,7 +26,6 @@ export function RoleFormModal({ role, onClose, onSaved }) {
   const [form, setForm] = useState({
     name: role?.name ?? '',
     description: role?.description ?? '',
-    active: role?.active ?? true,
   })
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
@@ -48,7 +46,7 @@ export function RoleFormModal({ role, onClose, onSaved }) {
     setSaving(true)
     setFormError('')
     try {
-      const data = { name: form.name.trim(), description: form.description.trim(), active: form.active }
+      const data = { name: form.name.trim(), description: form.description.trim() }
       const saved = isEdit ? await rolesService.update(role.id, data) : await rolesService.create(data)
       toast.success(isEdit ? 'Rol actualizado correctamente.' : 'Rol registrado correctamente.')
       onSaved(saved)
@@ -94,12 +92,6 @@ export function RoleFormModal({ role, onClose, onSaved }) {
             />
           </FormField>
 
-          <Switch
-            id="role-active"
-            checked={form.active}
-            onChange={(active) => setForm((current) => ({ ...current, active }))}
-            label={form.active ? 'Rol activo' : 'Rol inactivo (sus permisos no se aplican)'}
-          />
         </div>
 
         <div className="modal-footer">

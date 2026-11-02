@@ -14,7 +14,7 @@ export function toUser(dto) {
     id: dto.id,
     name: dto.name,
     email: dto.email,
-    active: dto.active ?? true,
+    active: dto.active ?? dto.enabled ?? true,
     authProvider: dto.authProvider ?? 'local',
     twoFactorEnabled: dto.twoFactorEnabled ?? false,
   }
@@ -42,14 +42,11 @@ export function toPermission(dto) {
   }
 }
 
-export function toPermissionPayload({ resource, operation, method, url, active }) {
+export function toPermissionPayload({ resource, method, url }) {
   return {
     url: url.trim(),
     method: method.toUpperCase(),
     model: modelFromResource(resource),
-    resource,
-    operation,
-    active,
   }
 }
 
@@ -62,6 +59,6 @@ export function toProfile(dto) {
   return {
     phone: dto.phone ?? '',
     birthDate: dto.birthDate ?? '',
-    photo: dto.photo ?? null,
+    photo: dto.photo ?? dto.photoUrl ?? null,
   }
 }

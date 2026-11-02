@@ -9,7 +9,7 @@ export async function get(userId) {
 }
 
 // Cada usuario tiene como máximo un perfil: se crea o se actualiza
-export async function save(userId, { phone, birthDate, photo }) {
+export async function save(userId, { phone, birthDate, photo, photoUrl }) {
   await delay()
   const db = getDb()
   const id = Number(userId)
@@ -19,7 +19,7 @@ export async function save(userId, { phone, birthDate, photo }) {
     profile = { userId: id }
     db.profiles.push(profile)
   }
-  Object.assign(profile, { phone: phone.trim(), birthDate, photo: photo ?? null })
+  Object.assign(profile, { phone: phone.trim(), birthDate, photo: photoUrl ?? photo ?? null })
   saveDb()
   return clone(profile)
 }

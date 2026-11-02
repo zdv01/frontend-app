@@ -3,7 +3,7 @@ import { env } from '../config/env'
 import { toPermission, toPermissionPayload } from './mappers'
 import * as mock from './mock/permissionsMock'
 
-// Permisos (HU-SE-05)
+// Permisos (HU-SE-05). El backend persiste url, method y model.
 const api = {
   // GET /api/permissions
   async list() {

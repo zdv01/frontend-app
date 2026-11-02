@@ -23,17 +23,31 @@ const api = {
     return toUser(data)
   },
 
-  // PUT /api/users/{id} { name, email, password? } — la contraseña solo si se cambia
-  async update(id, { name, email, password }) {
-    const body = { name, email, ...(password ? { password } : {}) }
+  // PUT /api/users/{id} { name, email, password?, enabled? }
+  async update(id, { name, email, password, enabled }) {
+    const body = {
+      name,
+      email,
+      ...(password ? { password } : {}),
+      ...(typeof enabled === 'boolean' ? { enabled } : {}),
+    }
     const { data } = await axiosClient.put(`/users/${id}`, body)
     return toUser(data)
   },
 
-  // (propuesto) PATCH /api/users/{id}/status { active }
+  // El backend desactiva con DELETE y reactiva con PUT { enabled: true }.
   async setActive(id, active) {
-    const { data } = await axiosClient.patch(`/users/${id}/status`, { active })
-    return toUser(data)
+    if (!active) {
+      await axiosClient.delete(`/users/${id}`)
+      return { ...(await api.get(id)), active: false }
+    }
+    const user = await api.get(id)
+    return api.update(id, { ...user, enabled: true })
+  },
+
+  async listAvailableForRole(roleId) {
+    const { data } = await axiosClient.get(`/users/available-for-role/${roleId}`)
+    return data.map(toUser)
   },
 }
 
