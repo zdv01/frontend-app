@@ -16,6 +16,10 @@ import { RolesPage } from '../pages/security/RolesPage'
 import { RoleUsersPage } from '../pages/security/RoleUsersPage'
 import { SecurityPage } from '../pages/security/SecurityPage'
 import { UsersPage } from '../pages/security/UsersPage'
+import { TeamsList } from '../pages/gestion-deportiva/equipos/TeamsList'
+import { TeamDetail } from '../pages/gestion-deportiva/equipos/TeamDetail'
+import { TournamentsList } from '../pages/gestion-deportiva/torneos/TournamentsList'
+import { TournamentDetail } from '../pages/gestion-deportiva/torneos/TournamentDetail'
 import { GuestRoute } from './GuestRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RequirePermission } from './RequirePermission'
@@ -174,6 +178,56 @@ export const router = createBrowserRouter([
               title: 'Mi perfil',
               subtitle: 'Consulta y actualiza tu información personal.',
             },
+          },
+          {
+            element: <RequirePermission resource="equipos" operation="listar" />,
+            children: [
+              {
+                path: '/equipos',
+                element: <TeamsList />,
+                handle: { title: 'Equipos', subtitle: 'Administra los equipos y sus asociaciones deportivas.' },
+              },
+            ],
+          },
+          {
+            element: <RequirePermission resource="equipos" operation="ver" />,
+            children: [
+              {
+                path: '/equipos/:id',
+                element: <TeamDetail />,
+                handle: { title: 'Detalle del equipo', subtitle: 'Información, deportes y torneos del equipo.' },
+              },
+            ],
+          },
+          {
+            element: <RequirePermission resource="torneos" operation="listar" />,
+            children: [
+              {
+                path: '/torneos',
+                element: <TournamentsList />,
+                handle: { title: 'Torneos', subtitle: 'Administra torneos e inscripciones de equipos.' },
+              },
+            ],
+          },
+          {
+            element: <RequirePermission resource="torneos" operation="ver" />,
+            children: [
+              {
+                path: '/torneos/:id',
+                element: <TournamentDetail />,
+                handle: { title: 'Detalle del torneo', subtitle: 'Información e inscripciones del torneo.' },
+              },
+              {
+                path: '/torneos/:id/fase-final',
+                element: <PlaceholderPage />,
+                handle: { title: 'Fase final', subtitle: 'Configuración pendiente de la persona C.' },
+              },
+              {
+                path: '/torneos/:id/desarrollo',
+                element: <PlaceholderPage />,
+                handle: { title: 'Desarrollo del torneo', subtitle: 'Consulta pendiente de la persona C.' },
+              },
+            ],
           },
         ],
       },

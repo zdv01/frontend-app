@@ -28,8 +28,10 @@ export const MODULES = [
     key: 'gestion-deportiva',
     label: 'Gestión Deportiva',
     resources: [
-      { key: 'torneos', label: 'Torneos', model: 'Tournament', path: '/api/tournaments' },
-      { key: 'equipos', label: 'Equipos', model: 'Team', path: '/api/teams' },
+      { key: 'torneos', label: 'Torneos', model: 'Torneo', path: '/api/torneos' },
+      { key: 'equipos', label: 'Equipos', model: 'Equipo', path: '/api/equipos' },
+      { key: 'deportes', label: 'Deportes', model: 'Deporte', path: '/api/deportes' },
+      { key: 'escenarios', label: 'Escenarios', model: 'Escenario', path: '/api/escenarios' },
       { key: 'jugadores', label: 'Jugadores', model: 'Player', path: '/api/players' },
       { key: 'partidos', label: 'Partidos', model: 'Match', path: '/api/matches' },
     ],

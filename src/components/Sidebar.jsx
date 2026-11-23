@@ -1,4 +1,13 @@
-import { ClipboardList, House, KeyRound, LockKeyhole, ShieldCheck, Users } from 'lucide-react'
+import {
+  ClipboardList,
+  House,
+  KeyRound,
+  LockKeyhole,
+  ShieldCheck,
+  Trophy,
+  Users,
+  UsersRound,
+} from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { Logo } from './Logo'
@@ -31,6 +40,20 @@ const NAV_ITEMS = [
     icon: KeyRound,
     paths: ['/permissions'],
     permission: ['permisos', 'listar'],
+  },
+  {
+    label: 'Equipos',
+    to: '/equipos',
+    icon: UsersRound,
+    paths: ['/equipos'],
+    permission: ['equipos', 'listar'],
+  },
+  {
+    label: 'Torneos',
+    to: '/torneos',
+    icon: Trophy,
+    paths: ['/torneos'],
+    permission: ['torneos', 'listar'],
   },
   { label: 'Seguridad', to: '/security', icon: LockKeyhole, paths: ['/security'] },
   { label: 'Auditoría', to: '/audit', icon: ClipboardList, paths: ['/audit'] },
