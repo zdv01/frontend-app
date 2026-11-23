@@ -6,6 +6,8 @@ const apiUrl = configuredApiUrl.replace(/\/+$/, '').endsWith('/api')
 export const env = {
   appName: import.meta.env.VITE_APP_NAME || 'SportManager',
   apiUrl,
+  gestionApiUrl:
+    (import.meta.env.VITE_GESTION_API_URL || 'http://localhost:8182/api').replace(/\/+$/, ''),
   // Las variables de Vite siempre llegan como texto, por eso se compara con 'true'
   useMocks: import.meta.env.VITE_USE_MOCKS === 'true',
   firebaseApiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
