@@ -1,4 +1,4 @@
-import { Eye, Pencil, Plus, Trash2, Power } from 'lucide-react'
+import { Eye, Pencil, Plus, Power, Trash2 } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ActionButton } from '../../../components/ActionButton'
@@ -9,8 +9,9 @@ import { DataTable } from '../../../components/DataTable'
 import { PermissionGate } from '../../../components/PermissionGate'
 import { useAsyncData } from '../../../hooks/useAsyncData'
 import { useAuth } from '../../../hooks/useAuth'
+import { useCan } from '../../../hooks/useCan'
 import { useToast } from '../../../hooks/useToast'
-import { equiposService } from '../../../services'
+import { catalogosService, equiposService } from '../../../services'
 import { getApiErrorMessage } from '../../../utils/apiError'
 import { matchesSearch, matchesStatus } from '../../../utils/format'
 import { TeamFormModal } from './TeamFormModal'
@@ -18,20 +19,43 @@ import { TeamFormModal } from './TeamFormModal'
 export function TeamsList() {
   const navigate = useNavigate()
   const { can } = useAuth()
+  const canListSports = useCan('deportes', 'listar')
+  const canViewSports = useCan('deportes', 'ver')
+  const canFilterBySport = canListSports && canViewSports
   const toast = useToast()
-  const load = useCallback(() => equiposService.list(), [])
-  const { data: teams, loading, error, reload } = useAsyncData(load)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
+  const [sportId, setSportId] = useState('')
   const [form, setForm] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [statusTarget, setStatusTarget] = useState(null)
   const [saving, setSaving] = useState(false)
 
-  const filtered = useMemo(
-    () => (teams ?? []).filter((team) => matchesSearch(search, team.nombre, team.ciudad) && matchesStatus(status, team.activo)),
-    [teams, search, status],
+  const load = useCallback(() => equiposService.list(), [])
+  const loadSports = useCallback(
+    () => (canFilterBySport ? catalogosService.getSports() : Promise.resolve([])),
+    [canFilterBySport],
   )
+  const loadSportTeams = useCallback(
+    () => (sportId ? equiposService.getBySport(Number(sportId)) : Promise.resolve(null)),
+    [sportId],
+  )
+
+  const { data: teams, loading, error, reload } = useAsyncData(load)
+  const sportsState = useAsyncData(loadSports)
+  const sportTeamsState = useAsyncData(loadSportTeams)
+
+  const filtered = useMemo(() => {
+    const sportTeamIds = sportId
+      ? new Set((sportTeamsState.data ?? []).map((item) => item.id))
+      : null
+    return (teams ?? []).filter(
+      (team) =>
+        matchesSearch(search, team.nombre, team.ciudad) &&
+        matchesStatus(status, team.activo) &&
+        (!sportTeamIds || sportTeamIds.has(team.id)),
+    )
+  }, [teams, search, status, sportId, sportTeamsState.data])
 
   const changeStatus = async () => {
     setSaving(true)
@@ -82,11 +106,32 @@ export function TeamsList() {
   return (
     <div className="page-stack">
       <CrudToolbar search={search} onSearchChange={setSearch} searchPlaceholder="Buscar por nombre o ciudad" status={status} onStatusChange={setStatus}>
+        {canFilterBySport && (
+          <select
+            className="input select-filter"
+            value={sportId}
+            onChange={(event) => setSportId(event.target.value)}
+            aria-label="Filtrar por deporte"
+          >
+            <option value="">Todos los deportes</option>
+            {(sportsState.data ?? []).map((sport) => (
+              <option key={sport.id} value={sport.id}>{sport.nombre}</option>
+            ))}
+          </select>
+        )}
         <PermissionGate resource="equipos" operation="crear">
           <button type="button" className="btn btn-primary" onClick={() => setForm({ team: null })}><Plus size={18} /> Nuevo equipo</button>
         </PermissionGate>
       </CrudToolbar>
-      <DataTable columns={columns} rows={filtered} loading={loading} error={error} onRetry={reload} emptyMessage="No hay equipos que coincidan." onRowClick={(team) => navigate(`/equipos/${team.id}`)} />
+      <DataTable
+        columns={columns}
+        rows={filtered}
+        loading={loading || (Boolean(sportId) && sportTeamsState.loading)}
+        error={error || sportTeamsState.error}
+        onRetry={() => { reload(); if (sportId) sportTeamsState.reload() }}
+        emptyMessage="No hay equipos que coincidan."
+        onRowClick={(team) => navigate(`/equipos/${team.id}`)}
+      />
       {form && <TeamFormModal team={form.team} onClose={() => setForm(null)} onSaved={() => { setForm(null); reload() }} />}
       {statusTarget && <ConfirmDialog title={statusTarget.activo ? 'Desactivar equipo' : 'Activar equipo'} danger={statusTarget.activo} confirmLabel={statusTarget.activo ? 'Desactivar' : 'Activar'} loading={saving} onConfirm={changeStatus} onCancel={() => setStatusTarget(null)} message={<p>¿{statusTarget.activo ? 'Desactivar' : 'Activar'} a <strong>{statusTarget.nombre}</strong>?</p>} />}
       {deleteTarget && <ConfirmDialog title="Eliminar equipo" confirmLabel="Eliminar" loading={saving} onConfirm={remove} onCancel={() => setDeleteTarget(null)} message={<p>¿Eliminar a <strong>{deleteTarget.nombre}</strong>? Solo se permite si no tiene datos asociados.</p>} />}

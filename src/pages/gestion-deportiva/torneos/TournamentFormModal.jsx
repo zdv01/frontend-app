@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Alert } from '../../../components/Alert'
 import { FormField } from '../../../components/FormField'
 import { Modal } from '../../../components/Modal'
@@ -10,12 +10,23 @@ import { getApiErrorMessage, getApiFieldErrors } from '../../../utils/apiError'
 import { hasErrors, validateMaxLength, validateRequired } from '../../../utils/validators'
 
 function validate(form) {
+  let maxEquiposError = ''
+  if (form.maxEquipos !== '' && form.maxEquipos !== null && form.maxEquipos !== undefined) {
+    const parsed = Number(form.maxEquipos)
+    if (!Number.isInteger(parsed) || parsed < 2) {
+      maxEquiposError = 'El máximo de equipos debe ser un número entero mayor o igual a 2.'
+    }
+  }
   return {
-    nombre: validateRequired(form.nombre, 'El nombre del torneo es obligatorio.') || validateMaxLength(form.nombre, 150),
+    nombre:
+      validateRequired(form.nombre, 'El nombre del torneo es obligatorio.') ||
+      validateMaxLength(form.nombre, 150, 'El nombre no puede superar 150 caracteres.'),
     deporteId: validateRequired(form.deporteId, 'Selecciona un deporte.'),
     fechaInicio: validateRequired(form.fechaInicio, 'La fecha de inicio es obligatoria.'),
     fechaFin: validateRequired(form.fechaFin, 'La fecha de fin es obligatoria.'),
     fechaCierreInscripciones: validateRequired(form.fechaCierreInscripciones, 'La fecha de cierre es obligatoria.'),
+    maxEquipos: maxEquiposError,
+    descripcion: validateMaxLength(form.descripcion, 500, 'La descripción no puede superar 500 caracteres.'),
   }
 }
 
@@ -35,6 +46,15 @@ export function TournamentFormModal({ tournament, onClose, onSaved }) {
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const sportOptions = useMemo(() => {
+    const active = (sports ?? []).filter((sport) => sport.activo)
+    const current = tournament?.deporte
+    if (current && !active.some((sport) => sport.id === current.id)) {
+      return [current, ...active]
+    }
+    return active
+  }, [sports, tournament])
 
   const change = (event) => {
     const { name, value } = event.target
@@ -56,10 +76,12 @@ export function TournamentFormModal({ tournament, onClose, onSaved }) {
       fechaInicio: form.fechaInicio,
       fechaFin: form.fechaFin,
       fechaCierreInscripciones: form.fechaCierreInscripciones,
-      maxEquipos: form.maxEquipos ? Number(form.maxEquipos) : null,
+      maxEquipos: form.maxEquipos !== '' ? Number(form.maxEquipos) : null,
     }
     try {
-      const saved = tournament ? await torneosService.update(tournament.id, payload) : await torneosService.create(payload)
+      const saved = tournament
+        ? await torneosService.update(tournament.id, payload)
+        : await torneosService.create(payload)
       toast.success(tournament ? 'Torneo actualizado correctamente.' : 'Torneo registrado correctamente.')
       onSaved(saved)
     } catch (error) {
@@ -82,7 +104,11 @@ export function TournamentFormModal({ tournament, onClose, onSaved }) {
             <FormField label="Deporte" htmlFor="tournament-sport" required error={errors.deporteId}>
               <select id="tournament-sport" className="input" name="deporteId" value={form.deporteId} onChange={change}>
                 <option value="">Selecciona un deporte</option>
-                {(sports ?? []).filter((sport) => sport.activo).map((sport) => <option value={sport.id} key={sport.id}>{sport.nombre}</option>)}
+                {sportOptions.map((sport) => (
+                  <option value={sport.id} key={sport.id}>
+                    {sport.nombre}{sport.activo === false ? ' (inactivo)' : ''}
+                  </option>
+                ))}
               </select>
             </FormField>
             <FormField label="Fecha de inicio" htmlFor="tournament-start" required error={errors.fechaInicio}>
@@ -94,7 +120,7 @@ export function TournamentFormModal({ tournament, onClose, onSaved }) {
             <FormField label="Cierre de inscripciones" htmlFor="tournament-close" required error={errors.fechaCierreInscripciones}>
               <input id="tournament-close" className="input" type="date" name="fechaCierreInscripciones" value={form.fechaCierreInscripciones} onChange={change} />
             </FormField>
-            <FormField label="Máximo de equipos" htmlFor="tournament-max" hint="Mínimo 2 equipos">
+            <FormField label="Máximo de equipos" htmlFor="tournament-max" hint="Mínimo 2 equipos" error={errors.maxEquipos}>
               <input id="tournament-max" className="input" type="number" min="2" name="maxEquipos" value={form.maxEquipos} onChange={change} />
             </FormField>
             <div className="field-full">

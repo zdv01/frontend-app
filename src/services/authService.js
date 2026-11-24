@@ -77,13 +77,15 @@ async function buildSession(token, expiresAt, providerHint = 'local') {
   let roles = (currentUser?.roles ?? []).map(toRole)
   let permissions = (currentUser?.permissions ?? []).map(toPermissionKey)
 
-  // Si /auth/me devuelve datos sin roles o permisos, se completan mediante las relaciones
-  if (!roles.length || roles.some((role) => !Number.isFinite(Number(role.id)))) {
+  // Si /auth/me devuelve datos sin roles, o sin permisos y sin IDs numéricos de rol, se completan mediante las relaciones
+  const needsRoleIdsForPermissions =
+    !permissions.length && roles.some((role) => !Number.isFinite(Number(role.id)))
+  if (!roles.length || needsRoleIdsForPermissions) {
     try {
       const { data: userRoles } = await axiosClient.get(`/user-roles/users/${userId}`, auth)
       roles = userRoles.map((userRole) => toRole(userRole.role))
     } catch {
-      roles = []
+      // Conservar los roles ya entregados por /auth/me (un ADMINISTRADOR DEPORTIVO puede recibir 403 aquí)
     }
   }
   if (!permissions.length && roles.length) {
@@ -95,7 +97,7 @@ async function buildSession(token, expiresAt, providerHint = 'local') {
         data.map((rolePermission) => toPermissionKey(rolePermission.permission)),
       )
     } catch {
-      permissions = []
+      // Conservar permisos existentes si no hay acceso a /role-permissions
     }
   }
 

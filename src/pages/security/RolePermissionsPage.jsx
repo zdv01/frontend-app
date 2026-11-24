@@ -21,7 +21,7 @@ import {
   Users,
   Volleyball,
 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Alert } from '../../components/Alert'
 import { StatusBadge } from '../../components/Badge'
@@ -115,25 +115,39 @@ export function RolePermissionsPage() {
   const isDirty = !sameSet(savedIds, checkedIds)
 
   const [collapsed, setCollapsed] = useState(() => new Set())
+  const [expandedResources, setExpandedResources] = useState(() => new Set())
   const [savedNotice, setSavedNotice] = useState(false)
   const [saving, setSaving] = useState(false)
   const [pendingAction, setPendingAction] = useState(null) // { type: 'role', roleId } | { type: 'reload' }
 
   const groups = useMemo(() => buildGroups(permissions), [permissions])
-  const permissionByKey = useMemo(
-    () => new Map(permissions.map((p) => [permissionKey(p.resource, p.operation), p])),
-    [permissions],
-  )
+  const permissionsByKey = useMemo(() => {
+    const map = new Map()
+    for (const permission of permissions) {
+      const key = permissionKey(permission.resource, permission.operation)
+      const list = map.get(key) ?? []
+      list.push(permission)
+      map.set(key, list)
+    }
+    return map
+  }, [permissions])
+
+  const permissionsByResource = useMemo(() => {
+    const map = new Map()
+    for (const permission of permissions) {
+      const list = map.get(permission.resource) ?? []
+      list.push(permission)
+      map.set(permission.resource, list)
+    }
+    return map
+  }, [permissions])
 
   // Resumen del panel derecho (se recalcula en vivo con el borrador)
   const activePermissions = permissions.filter((p) => p.active)
   const assignedCount = activePermissions.filter((p) => checkedIds.has(p.id)).length
   const modulesWithAccess = groups.filter((group) =>
     group.resources.some((resource) =>
-      OPERATIONS.some((op) => {
-        const p = permissionByKey.get(permissionKey(resource.key, op.key))
-        return p && checkedIds.has(p.id)
-      }),
+      (permissionsByResource.get(resource.key) ?? []).some((p) => checkedIds.has(p.id)),
     ),
   ).length
   const usersCount = savedData?.[1]?.length ?? 0
@@ -146,6 +160,28 @@ export function RolePermissionsPage() {
     else next.add(permissionId)
     setDraft({ base: savedData, ids: next })
     setSavedNotice(false)
+  }
+
+  const toggleCellPermissions = (cellPermissions) => {
+    const actionable = cellPermissions.filter((p) => p.active)
+    if (!actionable.length) return
+    const allChecked = actionable.every((p) => checkedIds.has(p.id))
+    const next = new Set(checkedIds)
+    for (const p of actionable) {
+      if (allChecked) next.delete(p.id)
+      else next.add(p.id)
+    }
+    setDraft({ base: savedData, ids: next })
+    setSavedNotice(false)
+  }
+
+  const toggleResourceEndpoints = (resourceKey) => {
+    setExpandedResources((current) => {
+      const next = new Set(current)
+      if (next.has(resourceKey)) next.delete(resourceKey)
+      else next.add(resourceKey)
+      return next
+    })
   }
 
   const toggleGroup = (groupKey) => {
@@ -301,43 +337,111 @@ export function RolePermissionsPage() {
                     {!isCollapsed &&
                       group.resources.map((resource) => {
                         const Icon = RESOURCE_ICONS[resource.key] ?? Box
+                        const resourcePermissions = permissionsByResource.get(resource.key) ?? []
+                        const hasMultiplePerCell = OPERATIONS.some(
+                          (op) => (permissionsByKey.get(permissionKey(resource.key, op.key)) ?? []).length > 1,
+                        )
+                        const isExpanded = expandedResources.has(resource.key)
                         return (
-                          <tr key={resource.key}>
-                            <th scope="row" className="rp-resource">
-                              <span className="rp-resource-label">
-                                <Icon size={18} aria-hidden="true" />
-                                {resource.label}
-                              </span>
-                            </th>
-                            {OPERATIONS.map((op) => {
-                              const permission = permissionByKey.get(permissionKey(resource.key, op.key))
-                              if (!permission) {
+                          <Fragment key={resource.key}>
+                            <tr>
+                              <th scope="row" className="rp-resource">
+                                <span className="rp-resource-label">
+                                  {hasMultiplePerCell && (
+                                    <button
+                                      type="button"
+                                      className="rp-expand-btn"
+                                      onClick={() => toggleResourceEndpoints(resource.key)}
+                                      aria-expanded={isExpanded}
+                                      title="Ver y asignar endpoints individuales"
+                                    >
+                                      {isExpanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                                    </button>
+                                  )}
+                                  <Icon size={18} aria-hidden="true" />
+                                  {resource.label}
+                                  {hasMultiplePerCell && (
+                                    <span className="rp-endpoint-total">({resourcePermissions.length})</span>
+                                  )}
+                                </span>
+                              </th>
+                              {OPERATIONS.map((op) => {
+                                const cellPerms = permissionsByKey.get(permissionKey(resource.key, op.key)) ?? []
+                                if (cellPerms.length === 0) {
+                                  return (
+                                    <td key={op.key} className="rp-cell">
+                                      <span
+                                        className="rp-missing"
+                                        title="Este permiso no está registrado en el sistema"
+                                      >
+                                        —
+                                      </span>
+                                    </td>
+                                  )
+                                }
+                                if (cellPerms.length === 1) {
+                                  const permission = cellPerms[0]
+                                  return (
+                                    <td key={op.key} className="rp-cell">
+                                      <input
+                                        type="checkbox"
+                                        className="rp-check"
+                                        checked={checkedIds.has(permission.id)}
+                                        onChange={() => toggle(permission.id)}
+                                        disabled={!canEdit || busy || !permission.active}
+                                        title={permission.active ? `${permission.method} ${permission.url}` : 'Permiso inactivo'}
+                                        aria-label={`${op.label} ${resource.label}`}
+                                      />
+                                    </td>
+                                  )
+                                }
+                                const activeCell = cellPerms.filter((p) => p.active)
+                                const checkedInCell = activeCell.filter((p) => checkedIds.has(p.id)).length
+                                const allChecked = activeCell.length > 0 && checkedInCell === activeCell.length
+                                const partial = checkedInCell > 0 && checkedInCell < activeCell.length
                                 return (
                                   <td key={op.key} className="rp-cell">
-                                    <span
-                                      className="rp-missing"
-                                      title="Este permiso no está registrado en el sistema"
-                                    >
-                                      —
+                                    <span className="rp-cell-multi">
+                                      <input
+                                        type="checkbox"
+                                        className={`rp-check ${partial ? 'is-indeterminate' : ''}`}
+                                        checked={allChecked}
+                                        ref={(el) => {
+                                          if (el) el.indeterminate = partial
+                                        }}
+                                        onChange={() => toggleCellPermissions(cellPerms)}
+                                        disabled={!canEdit || busy || activeCell.length === 0}
+                                        title={cellPerms.map((p) => `${p.method} ${p.url}`).join('\n')}
+                                        aria-label={`${op.label} ${resource.label} (${checkedInCell} de ${activeCell.length})`}
+                                      />
+                                      <span className="rp-cell-count">{checkedInCell}/{activeCell.length}</span>
                                     </span>
                                   </td>
                                 )
-                              }
-                              return (
-                                <td key={op.key} className="rp-cell">
-                                  <input
-                                    type="checkbox"
-                                    className="rp-check"
-                                    checked={checkedIds.has(permission.id)}
-                                    onChange={() => toggle(permission.id)}
-                                    disabled={!canEdit || busy || !permission.active}
-                                    title={permission.active ? undefined : 'Permiso inactivo'}
-                                    aria-label={`${op.label} ${resource.label}`}
-                                  />
+                              })}
+                            </tr>
+                            {hasMultiplePerCell && isExpanded && (
+                              <tr className="rp-subrow">
+                                <td colSpan={OPERATIONS.length + 1}>
+                                  <div className="rp-endpoints-grid">
+                                    {resourcePermissions.map((perm) => (
+                                      <label key={perm.id} className="rp-endpoint-item">
+                                        <input
+                                          type="checkbox"
+                                          className="rp-check"
+                                          checked={checkedIds.has(perm.id)}
+                                          onChange={() => toggle(perm.id)}
+                                          disabled={!canEdit || busy || !perm.active}
+                                        />
+                                        <span className="rp-endpoint-method">{perm.method}</span>
+                                        <code className="rp-endpoint-url">{perm.url}</code>
+                                      </label>
+                                    ))}
+                                  </div>
                                 </td>
-                              )
-                            })}
-                          </tr>
+                              </tr>
+                            )}
+                          </Fragment>
                         )
                       })}
                   </tbody>

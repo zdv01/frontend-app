@@ -34,7 +34,7 @@ export function validateRequired(value, message) {
   return String(value ?? '').trim() ? '' : message
 }
 
-export function validateMaxLength(value, max, message) {
+export function validateMaxLength(value, max, message = `No debe superar ${max} caracteres.`) {
   return String(value ?? '').trim().length > max ? message : ''
 }
 

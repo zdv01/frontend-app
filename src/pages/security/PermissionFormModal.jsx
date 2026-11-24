@@ -10,23 +10,36 @@ import { permissionsService } from '../../services'
 import { getApiErrorCase, getApiErrorMessage, getApiFieldErrors } from '../../utils/apiError'
 import { hasErrors, validateMaxLength, validateRequired } from '../../utils/validators'
 
-const DUPLICATE_MESSAGE = 'Ya existe un permiso para esta operación y recurso.'
+const DUPLICATE_MESSAGE = 'Ya existe un permiso con este método HTTP y URL.'
+
+function normalizeUrlForCheck(url) {
+  return String(url ?? '')
+    .trim()
+    .replace(/\/+$/, '')
+    .toLowerCase()
+}
 
 function validate(form, permissions, currentId) {
-  const duplicated = permissions.some(
-    (p) => p.id !== currentId && p.resource === form.resource && p.operation === form.operation,
-  )
   const url = form.url.trim()
+  const normalizedUrl = normalizeUrlForCheck(url)
+  const normalizedMethod = String(form.method ?? '').trim().toUpperCase()
+  const duplicated =
+    Boolean(normalizedMethod && normalizedUrl) &&
+    permissions.some(
+      (p) =>
+        p.id !== currentId &&
+        String(p.method ?? '').toUpperCase() === normalizedMethod &&
+        normalizeUrlForCheck(p.url) === normalizedUrl,
+    )
   return {
     resource: validateRequired(form.resource, 'Selecciona el recurso.'),
-    operation:
-      validateRequired(form.operation, 'Selecciona la operación.') ||
-      (duplicated ? DUPLICATE_MESSAGE : ''),
+    operation: validateRequired(form.operation, 'Selecciona la operación.'),
     method: validateRequired(form.method, 'Selecciona el método HTTP.'),
     url:
       validateRequired(url, 'La URL es obligatoria.') ||
       (url.startsWith('/') ? '' : 'La URL debe empezar con "/".') ||
-      validateMaxLength(url, 255, 'La URL no debe superar 255 caracteres.'),
+      validateMaxLength(url, 255, 'La URL no debe superar 255 caracteres.') ||
+      (duplicated ? DUPLICATE_MESSAGE : ''),
   }
 }
 

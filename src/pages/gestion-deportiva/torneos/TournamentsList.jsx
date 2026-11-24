@@ -58,7 +58,7 @@ export function TournamentsList() {
 
   const columns = [
     { key: 'nombre', label: 'Nombre', sortable: true, render: (item) => <strong>{item.nombre}</strong> },
-    { key: 'deporte', label: 'Deporte', sortable: true, render: (item) => item.deporte?.nombre ?? '—' },
+    { key: 'deporte', label: 'Deporte', sortable: true, sortValue: (item) => item.deporte?.nombre ?? '', render: (item) => item.deporte?.nombre ?? '—' },
     { key: 'fechaInicio', label: 'Inicio', sortable: true },
     { key: 'fechaFin', label: 'Fin', sortable: true },
     { key: 'estado', label: 'Estado', sortable: true, render: (item) => <Chip>{getTournamentStatusLabel(item)}</Chip> },

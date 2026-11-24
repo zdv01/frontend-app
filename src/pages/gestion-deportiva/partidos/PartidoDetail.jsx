@@ -82,10 +82,21 @@ export function PartidoDetail() {
   const { data: partido, loading, error, reload } = useAsyncData(load)
 
   if (loading && !partido) return <Spinner label="Cargando partido..." />
-  if (error) return <Alert type="error">No se pudo cargar el partido. <button type="button" className="btn" onClick={reload}>Reintentar</button></Alert>
+  if (error) {
+    return (
+      <Alert type="error">
+        {getApiErrorMessage(error, 'No se pudo cargar el partido.')}{' '}
+        <button type="button" className="btn" onClick={reload}>Reintentar</button>
+      </Alert>
+    )
+  }
   if (!partido) return <Alert type="error">El partido no existe.</Alert>
 
-  const aceptaResultado = ['EN_JUEGO', 'FINALIZADO'].includes(partido.estado)
+  const torneoFinalizado = partido.torneo?.estado === 'FINALIZADO'
+  const aceptaResultado = ['EN_JUEGO', 'FINALIZADO'].includes(partido.estado) && !torneoFinalizado
+  const hayAcciones =
+    (puedeActualizar && (partido.estado === 'PROGRAMADO' || TRANSICIONES[partido.estado].length > 0)) ||
+    (puedeEliminar && partido.estado === 'PROGRAMADO')
 
   return (
     <div className="page-stack gd-skin">
@@ -111,10 +122,10 @@ export function PartidoDetail() {
             <DetailRow label={iconLabel(CalendarClock, 'Fecha y hora')}>{fechaHoraTexto(partido.fechaHora)}</DetailRow>
             <DetailRow label={iconLabel(MapPin, 'Escenario')}>{partido.escenario?.nombre ?? 'Sin escenario'}</DetailRow>
           </dl>
-          {puedeActualizar && (
+          {hayAcciones && (
             <div className="detail-actions">
-              {partido.estado === 'PROGRAMADO' && <button type="button" className="btn btn-outline-info" onClick={() => setEditando(true)}><Pencil size={16} /> Editar</button>}
-              {TRANSICIONES[partido.estado].map((destino) => (
+              {puedeActualizar && partido.estado === 'PROGRAMADO' && <button type="button" className="btn btn-outline-info" onClick={() => setEditando(true)}><Pencil size={16} /> Editar</button>}
+              {puedeActualizar && TRANSICIONES[partido.estado].map((destino) => (
                 <button key={destino} type="button" className={`btn ${ACCION_ESTADO[destino].variant}`} onClick={() => setEstadoTarget(destino)}>{ACCION_ESTADO[destino].label}</button>
               ))}
               {puedeEliminar && partido.estado === 'PROGRAMADO' && <button type="button" className="btn btn-outline-danger" onClick={() => setEliminando(true)}><Trash2 size={16} /> Eliminar</button>}
@@ -127,12 +138,19 @@ export function PartidoDetail() {
             <h2 className="section-title gd-panel-title"><Trophy size={20} /> Resultado</h2>
             {aceptaResultado && puedeActualizar && <ResultadoForm key={`${partido.marcadorLocal}-${partido.marcadorVisitante}`} partido={partido} onSaved={reload} />}
             {aceptaResultado && !puedeActualizar && <p>{partido.tieneResultado ? `Resultado: ${partido.marcadorLocal} - ${partido.marcadorVisitante}` : 'Aún no se registra el resultado.'}</p>}
-            {!aceptaResultado && <WarningNote>El resultado solo se registra cuando el partido está En juego o Finalizado.</WarningNote>}
+            {!aceptaResultado && (
+              <WarningNote>
+                {torneoFinalizado
+                  ? 'El torneo ya está finalizado; no se puede modificar el resultado.'
+                  : 'El resultado solo se registra cuando el partido está En juego o Finalizado.'}
+              </WarningNote>
+            )}
             {partido.estado === 'EN_JUEGO' && !partido.tieneResultado && <p className="gd-section-footer">Para finalizar el partido primero debes registrar el resultado.</p>}
           </section>
-          <AnotacionesPartido partidoId={partido.id} partido={partido} onChange={reload} />
         </div>
       </div>
+
+      <AnotacionesPartido partidoId={partido.id} partido={partido} onChange={reload} />
 
       {editando && <PartidoFormModal partido={partido} onClose={() => setEditando(false)} onSaved={() => { setEditando(false); reload() }} />}
       {estadoTarget && <CambioEstadoDialog partido={partido} estado={estadoTarget} onClose={() => setEstadoTarget(null)} onDone={reload} />}

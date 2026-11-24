@@ -18,8 +18,10 @@ import { hasErrors, validateMaxLength, validateRequired } from '../../../utils/v
 import { PersonCell, WarningNote } from '../jugadores/gdUi'
 import '../jugadores/gd.css'
 
-// Solo se anota en partidos que ya empezaron
-const puedeAnotar = (partido) => ['EN_JUEGO', 'FINALIZADO'].includes(partido?.estado)
+// Solo se anota en partidos EN_JUEGO o FINALIZADO mientras el torneo no esté FINALIZADO
+const puedeAnotar = (partido) =>
+  ['EN_JUEGO', 'FINALIZADO'].includes(partido?.estado) &&
+  partido?.torneo?.estado !== 'FINALIZADO'
 
 function validate(form) {
   const minuto = form.minuto === '' ? '' : (Number.isInteger(Number(form.minuto)) && Number(form.minuto) >= 0 ? '' : 'El minuto debe ser un entero mayor o igual a 0.')
@@ -186,7 +188,8 @@ export function AnotacionesPartido({ partidoId, partido: partidoProp, soloLectur
     { key: 'descripcion', label: 'Descripción', render: (a) => a.descripcion || '—' },
     { key: 'fechaRegistro', label: 'Registrada', render: (a) => formatDateTime(a.fechaRegistro) },
   ]
-  if (puedeActualizar || puedeEliminar) {
+  const permiteMutaciones = puedeAnotar(partido)
+  if (permiteMutaciones && (puedeActualizar || puedeEliminar)) {
     columns.push({
       key: 'actions', label: 'Acciones', className: 'col-actions',
       render: (a) => (
@@ -203,13 +206,17 @@ export function AnotacionesPartido({ partidoId, partido: partidoProp, soloLectur
       <div className="gd-panel-head">
         <h2 className="section-title gd-panel-title"><Target size={20} /> Anotaciones</h2>
         {puedeCrear && (
-          <button type="button" className="btn btn-primary" disabled={!puedeAnotar(partido)} onClick={() => setForm({ anotacion: null })}>
+          <button type="button" className="btn btn-primary" disabled={!permiteMutaciones} onClick={() => setForm({ anotacion: null })}>
             <Plus size={18} /> Nueva anotación
           </button>
         )}
       </div>
-      {puedeCrear && partido && !puedeAnotar(partido) && (
-        <WarningNote>Las anotaciones solo se registran cuando el partido está En juego o Finalizado.</WarningNote>
+      {puedeCrear && partido && !permiteMutaciones && (
+        <WarningNote>
+          {partido.torneo?.estado === 'FINALIZADO'
+            ? 'El torneo ya está finalizado; no se pueden modificar las anotaciones.'
+            : 'Las anotaciones solo se registran cuando el partido está En juego o Finalizado.'}
+        </WarningNote>
       )}
       <DataTable columns={columns} rows={anotaciones ?? []} loading={loading} error={error} onRetry={reload} emptyMessage="Este partido no tiene anotaciones." pageSize={6} />
       {form && partido && <AnotacionModal partido={partido} anotacion={form.anotacion} onClose={() => setForm(null)} onSaved={() => { setForm(null); recargar() }} />}

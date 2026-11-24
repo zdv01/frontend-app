@@ -22,6 +22,9 @@ export function getApiErrorMessage(error, fallback = 'Ocurrió un error inespera
   if (status === 403) {
     return 'No tienes permiso para realizar esta operación.'
   }
+  if (status === 503) {
+    return 'El servicio no está disponible temporalmente. Intenta nuevamente.'
+  }
   return fallback
 }
 
@@ -33,7 +36,13 @@ export function getApiErrorCase(error) {
 // Errores por campo de una respuesta 400: { email: '...', password: '...' }
 export function getApiFieldErrors(error) {
   const data = error?.response?.data
-  if (error?.response?.status !== 400 || !data || data.message) {
+  if (
+    error?.response?.status !== 400 ||
+    !data ||
+    typeof data !== 'object' ||
+    Array.isArray(data) ||
+    data.message
+  ) {
     return {}
   }
   return data

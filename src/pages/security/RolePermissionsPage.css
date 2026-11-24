@@ -246,6 +246,78 @@
   opacity: 0.6;
 }
 
+.rp-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.rp-endpoint-total {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.rp-cell-multi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rp-cell-count {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.rp-check.is-indeterminate {
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.rp-check.is-indeterminate::after {
+  width: 9px;
+  height: 0;
+  margin-top: 0;
+  border-width: 0 0 2px 0;
+  border-color: var(--accent);
+  transform: none;
+  opacity: 1;
+}
+
+.rp-subrow td {
+  background: rgba(15, 23, 42, 0.45);
+  padding: 10px var(--space-5);
+}
+
+.rp-endpoints-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px 14px;
+}
+
+.rp-endpoint-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.rp-endpoint-method {
+  min-width: 48px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.rp-endpoint-url {
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
 /* ---------- Panel derecho ---------- */
 .rp-side .panel {
   padding: var(--space-5);

@@ -37,9 +37,19 @@ export function PartidoDesarrolloCard({ partido, faseNombre, selected = false, o
       <div className="dev-match-card-top">
         <span className="dev-match-context">{contextLabel}</span>
         <span
-          className={`bracket-result-tag ${partido.tieneResultado ? 'is-recorded' : 'is-waiting'}`}
+          className={`bracket-result-tag ${
+            partido.estado === 'CANCELADO'
+              ? 'is-undefined'
+              : partido.tieneResultado
+                ? 'is-recorded'
+                : 'is-waiting'
+          }`}
         >
-          {partido.tieneResultado ? 'Con resultado' : 'Pendiente'}
+          {partido.estado === 'CANCELADO'
+            ? 'Cancelado'
+            : partido.tieneResultado
+              ? 'Con resultado'
+              : 'Pendiente'}
         </span>
       </div>
 

@@ -17,5 +17,14 @@ export async function update(id, payload) {
 export async function changeStatus(id, estado) { return update(id, { estado, inscripcionesAbiertas: estado === 'INSCRIPCIONES_ABIERTAS' }) }
 export async function remove(id) { tournaments = tournaments.filter((item) => item.id !== Number(id)) }
 export async function getInscriptions(id) { return inscriptions[id] ?? [] }
-export async function enrollTeams(id, equipoIds) { return equipoIds.map((equipoId) => ({ id: equipoId + 100, torneo: { id: Number(id), nombre: 'Copa Caldas 2026', estado: 'INSCRIPCIONES_ABIERTAS' }, equipo: { id: equipoId, nombre: equipoId === 4 ? 'Once Caldas' : 'Deportes Pereira', activo: true }, fechaInscripcion: new Date().toISOString() })) }
+export async function enrollTeams(id, equipoIds) {
+  const created = equipoIds.map((equipoId) => ({
+    id: equipoId + 100,
+    torneo: { id: Number(id), nombre: 'Copa Caldas 2026', estado: 'INSCRIPCIONES_ABIERTAS' },
+    equipo: { id: equipoId, nombre: equipoId === 4 ? 'Once Caldas' : 'Deportes Pereira', activo: true },
+    fechaInscripcion: new Date().toISOString(),
+  }))
+  inscriptions[id] = [...(inscriptions[id] ?? []), ...created]
+  return created
+}
 export async function removeEnrollment(id, equipoId) { inscriptions[id] = (inscriptions[id] ?? []).filter((item) => item.equipo.id !== equipoId) }

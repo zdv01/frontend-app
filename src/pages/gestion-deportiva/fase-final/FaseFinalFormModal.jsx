@@ -49,7 +49,13 @@ export function FaseFinalFormModal({ torneoId, faseFinal = null, onClose, onSave
 
   const handleChange = (event) => {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
+    setForm((current) => {
+      const next = { ...current, [name]: value }
+      if (name === 'cantidadEquipos' && Number(value) === 2) {
+        next.tercerPuesto = false
+      }
+      return next
+    })
     setErrors((current) => ({ ...current, [name]: '' }))
   }
 
@@ -166,9 +172,14 @@ export function FaseFinalFormModal({ torneoId, faseFinal = null, onClose, onSave
             <div className="field-full">
               <Switch
                 id="ff-tercer-puesto"
-                checked={form.tercerPuesto}
+                checked={Number(form.cantidadEquipos) === 2 ? false : form.tercerPuesto}
+                disabled={Number(form.cantidadEquipos) === 2}
                 onChange={(checked) => setForm((current) => ({ ...current, tercerPuesto: checked }))}
-                label="Incluir partido por el tercer puesto"
+                label={
+                  Number(form.cantidadEquipos) === 2
+                    ? 'Incluir partido por el tercer puesto (requiere al menos 4 equipos)'
+                    : 'Incluir partido por el tercer puesto'
+                }
               />
             </div>
           </div>

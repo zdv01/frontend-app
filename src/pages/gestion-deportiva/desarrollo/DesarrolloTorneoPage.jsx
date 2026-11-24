@@ -163,10 +163,10 @@ export function DesarrolloTorneoPage() {
       })),
     )
     if (currentUi.matchFilter === 'CON_RESULTADO') {
-      return base.filter((p) => p.tieneResultado)
+      return base.filter((p) => p.estado !== 'CANCELADO' && p.tieneResultado)
     }
     if (currentUi.matchFilter === 'PENDIENTES') {
-      return base.filter((p) => !p.tieneResultado)
+      return base.filter((p) => p.estado !== 'CANCELADO' && !p.tieneResultado)
     }
     return base
   }, [visibleFases, currentUi.matchFilter])
@@ -603,9 +603,19 @@ export function DesarrolloTorneoPage() {
               <h3 className="section-title">Detalle del Partido</h3>
               {selectedMatch && (
                 <span
-                  className={`bracket-result-tag ${selectedMatch.tieneResultado ? 'is-recorded' : 'is-waiting'}`}
+                  className={`bracket-result-tag ${
+                    selectedMatch.estado === 'CANCELADO'
+                      ? 'is-undefined'
+                      : selectedMatch.tieneResultado
+                        ? 'is-recorded'
+                        : 'is-waiting'
+                  }`}
                 >
-                  {selectedMatch.tieneResultado ? 'Con resultado' : 'Pendiente'}
+                  {selectedMatch.estado === 'CANCELADO'
+                    ? 'Cancelado'
+                    : selectedMatch.tieneResultado
+                      ? 'Con resultado'
+                      : 'Pendiente'}
                 </span>
               )}
             </header>

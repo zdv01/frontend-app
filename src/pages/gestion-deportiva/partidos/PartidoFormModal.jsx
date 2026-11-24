@@ -68,7 +68,9 @@ export function PartidoFormModal({ partido, torneoId, onClose, onSaved }) {
   const escenarios = useAsyncData(cargarEscenarios)
   const fases = useAsyncData(cargarFases)
   const fase = (fases.data ?? []).find((f) => String(f.id) === form.faseId) ?? null
-  const esFinal = fase?.tipo === 'FINAL'
+  const esFinal = (fase?.tipo ?? partido?.fase?.tipo) === 'FINAL'
+  const catalogError = torneos.error || escenarios.error || fases.error || equipos.error
+  const cargandoDependencias = fases.loading || equipos.loading
 
   // Equipos candidatos: los del grupo si la fase es GRUPO; los inscritos al torneo si es FINAL
   const cargarEquipos = useCallback(() => {
@@ -123,6 +125,11 @@ export function PartidoFormModal({ partido, torneoId, onClose, onSaved }) {
       <form onSubmit={submit} noValidate>
         <div className="modal-body">
           {formError && <Alert type="error">{formError}</Alert>}
+          {catalogError && (
+            <Alert type="error">
+              {getApiErrorMessage(catalogError, 'No se pudieron cargar todos los catálogos del formulario.')}
+            </Alert>
+          )}
           <div className="form-grid">
             <FormField label="Torneo" htmlFor="pt-torneo" required error={errors.torneoId}>
               <select id="pt-torneo" className="input" name="torneoId" value={form.torneoId} onChange={change} disabled={Boolean(partido || torneoId)}>
@@ -177,7 +184,7 @@ export function PartidoFormModal({ partido, torneoId, onClose, onSaved }) {
         </div>
         <div className="modal-footer">
           <button type="button" className="btn" onClick={onClose} disabled={saving}>Cancelar</button>
-          <button type="submit" className="btn btn-primary" disabled={saving}>{saving && <Spinner size={16} />}Guardar</button>
+          <button type="submit" className="btn btn-primary" disabled={saving || cargandoDependencias}>{saving && <Spinner size={16} />}Guardar</button>
         </div>
       </form>
     </Modal>

@@ -45,7 +45,7 @@ const ROLE_PERMISSIONS = {
   2: [
     'usuarios:ver',
     'usuarios:listar',
-    ...['torneos', 'equipos', 'jugadores', 'partidos'].flatMap((resource) =>
+    ...['torneos', 'equipos', 'jugadores', 'partidos', 'fases'].flatMap((resource) =>
       OPERATIONS.map((operation) => permissionKey(resource, operation.key)),
     ),
   ],

@@ -79,7 +79,7 @@ export function Sidebar({ open, onClose }) {
   const { pathname } = useLocation()
 
   const visibleItems = NAV_ITEMS.filter((item) => !item.permission || can(...item.permission))
-  const roleLabel = user?.roles?.[0]?.description ?? 'Sin rol asignado'
+  const roleLabel = user?.roles?.[0]?.description || user?.roles?.[0]?.name || 'Sin rol asignado'
 
   return (
     <aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>

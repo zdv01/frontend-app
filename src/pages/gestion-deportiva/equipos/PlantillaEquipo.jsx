@@ -93,7 +93,7 @@ function AsignarJugadorModal({ equipoId, actuales, onClose, onSaved }) {
 }
 
 // Plantilla (contratos activos) e historial (retirados) de un equipo. Se incrusta en /equipos/:id.
-export function PlantillaEquipo({ equipoId }) {
+export function PlantillaEquipo({ equipoId, equipoActivo = true }) {
   const navigate = useNavigate()
   const toast = useToast()
   // Las rutas son /api/equipos/{id}/jugadores...: el recurso es el primer segmento (ACUERDOS 10.4)
@@ -129,9 +129,22 @@ export function PlantillaEquipo({ equipoId }) {
       <section className="panel team-section gd-skin">
         <div className="gd-panel-head">
           <h3 className="section-title gd-panel-title"><Users size={20} /> Jugadores actuales</h3>
-          {canAssign && <button type="button" className="btn btn-outline-primary" onClick={() => setAsignando(true)}><Plus size={16} /> Asignar jugador</button>}
+          {canAssign && (
+            <button
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={() => setAsignando(true)}
+              disabled={!equipoActivo}
+              title={equipoActivo ? undefined : 'El equipo está inactivo'}
+            >
+              <Plus size={16} /> Asignar jugador
+            </button>
+          )}
         </div>
-        {error && <Alert type="error">No se pudo cargar la plantilla. <button type="button" className="btn" onClick={reload}>Reintentar</button></Alert>}
+        {!equipoActivo && (
+          <WarningNote>El equipo está inactivo; no se pueden asignar nuevos jugadores a la plantilla.</WarningNote>
+        )}
+        {error && <Alert type="error">{getApiErrorMessage(error, 'No se pudo cargar la plantilla.')} <button type="button" className="btn" onClick={reload}>Reintentar</button></Alert>}
         {loading && !data ? <Spinner label="Cargando..." /> : (
           <div className="table-card">
             <div className="table-scroll">

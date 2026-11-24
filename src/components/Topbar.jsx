@@ -42,7 +42,7 @@ export function Topbar({ onMenuClick }) {
     await logout()
   }
 
-  const roleLabel = user?.roles?.[0]?.description ?? 'Sin rol asignado'
+  const roleLabel = user?.roles?.[0]?.description || user?.roles?.[0]?.name || 'Sin rol asignado'
 
   return (
     <header className="topbar">

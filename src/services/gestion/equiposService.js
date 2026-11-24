@@ -31,6 +31,10 @@ const api = {
     const { data } = await gestionClient.get(`/equipos/${teamId}/deportes`)
     return unwrapApiData(data)
   },
+  async getBySport(deporteId) {
+    const { data } = await gestionClient.get(`/deportes/${deporteId}/equipos`)
+    return unwrapApiData(data)
+  },
   async assignSport(teamId, deporteId) {
     const { data } = await gestionClient.post(`/equipos/${teamId}/deportes`, { deporteId })
     return unwrapApiData(data)

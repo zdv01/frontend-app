@@ -39,9 +39,19 @@ function LlaveCard({ llave, onSelectPartido }) {
         <span className="bracket-llave-num">Llave #{numeroLlave}</span>
         {partido ? (
           <span
-            className={`bracket-result-tag ${partido.tieneResultado ? 'is-recorded' : 'is-waiting'}`}
+            className={`bracket-result-tag ${
+              partido.estado === 'CANCELADO'
+                ? 'is-undefined'
+                : partido.tieneResultado
+                  ? 'is-recorded'
+                  : 'is-waiting'
+            }`}
           >
-            {partido.tieneResultado ? 'Con resultado' : 'Pendiente'}
+            {partido.estado === 'CANCELADO'
+              ? 'Cancelado'
+              : partido.tieneResultado
+                ? 'Con resultado'
+                : 'Pendiente'}
           </span>
         ) : (
           <span className="bracket-result-tag is-undefined">Por definir</span>

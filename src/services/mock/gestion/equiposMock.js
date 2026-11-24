@@ -18,6 +18,11 @@ export async function update(id, payload) {
 export async function changeStatus(id, activo) { return update(id, { activo }) }
 export async function remove(id) { teams = teams.filter((team) => team.id !== Number(id)) }
 export async function getSports(teamId) { return sportsByTeam[teamId] ?? [] }
+export async function getBySport(deporteId) {
+  return teams.filter((team) =>
+    (sportsByTeam[team.id] ?? []).some((sport) => sport.id === Number(deporteId)),
+  )
+}
 export async function assignSport(teamId, deporteId) {
   const sport = { id: deporteId, nombre: deporteId === 1 ? 'Fútbol' : 'Baloncesto', activo: true }
   sportsByTeam[teamId] = [...(sportsByTeam[teamId] ?? []).filter((item) => item.id !== deporteId), sport]
