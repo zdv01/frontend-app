@@ -26,6 +26,11 @@ const api = {
     const { data } = await gestionClient.get(`/fases-finales/${faseFinalId}/llaves`)
     return data
   },
+
+  async obtenerDesarrollo(torneoId) {
+    const { data } = await gestionClient.get(`/torneos/${torneoId}/desarrollo`)
+    return data
+  },
 }
 
 export const fasesService = env.useMocks ? mock : api

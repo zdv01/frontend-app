@@ -18,6 +18,7 @@ import { SecurityPage } from '../pages/security/SecurityPage'
 import { UsersPage } from '../pages/security/UsersPage'
 import { TeamsList } from '../pages/gestion-deportiva/equipos/TeamsList'
 import { TeamDetail } from '../pages/gestion-deportiva/equipos/TeamDetail'
+import { DesarrolloTorneoPage } from '../pages/gestion-deportiva/desarrollo/DesarrolloTorneoPage'
 import { FaseFinalPage } from '../pages/gestion-deportiva/fase-final/FaseFinalPage'
 import { PlayersList } from '../pages/gestion-deportiva/jugadores/PlayersList'
 import { PlayerDetail } from '../pages/gestion-deportiva/jugadores/PlayerDetail'
@@ -232,10 +233,12 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                // TODO(HU-GC-08): conectar DesarrolloTorneoPage cuando Persona B suba AnotacionesPartido
                 path: '/torneos/:id/desarrollo',
-                element: <PlaceholderPage />,
-                handle: { title: 'Desarrollo del torneo', subtitle: 'Consulta pendiente de la persona C.' },
+                element: <DesarrolloTorneoPage />,
+                handle: {
+                  title: 'Desarrollo del torneo',
+                  subtitle: 'Consulta la estructura, fases, posiciones, partidos y resultados de la competencia.',
+                },
               },
             ],
           },
