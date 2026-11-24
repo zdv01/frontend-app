@@ -23,6 +23,7 @@ export function FaseFinalPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const canVerLlaves = useCan('fases', 'ver')
+  const canVerPartidos = useCan('partidos', 'ver')
 
   const [showFormModal, setShowFormModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -259,6 +260,9 @@ export function FaseFinalPage() {
               <CuadroLlaves
                 rondas={llaves.rondas}
                 tercerPuesto={llaves.tercerPuesto}
+                onSelectPartido={
+                  canVerPartidos ? (partido) => navigate(`/partidos/${partido.id}`) : undefined
+                }
               />
             ) : (
               <Spinner label="Cargando cuadro de llaves..." />

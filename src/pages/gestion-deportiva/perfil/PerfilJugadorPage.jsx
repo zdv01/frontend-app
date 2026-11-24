@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   Calendar,
   History,
   IdCard,
@@ -101,6 +102,15 @@ export function PerfilJugadorPage() {
 
   return (
     <div className="page-stack perfil-page">
+      <button
+        type="button"
+        className="btn back-link"
+        onClick={() => navigate(`/jugadores/${id}`)}
+        style={{ alignSelf: 'flex-start' }}
+      >
+        <ArrowLeft size={16} /> Volver al jugador
+      </button>
+
       {/* Buscador superior de jugadores */}
       {canSearchPlayers && (
         <div className="perfil-search-bar" ref={searchBoxRef}>
