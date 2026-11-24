@@ -1,0 +1,427 @@
+/* Estilos locales para HU-GC-05 (FaseFinalPage y CuadroLlaves) */
+
+.ff-top-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ff-back-btn {
+  align-self: flex-start;
+}
+
+.ff-tournament-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ff-tournament-name {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ff-loading-box {
+  display: grid;
+  place-items: center;
+  padding: var(--space-8);
+}
+
+.ff-empty-card {
+  max-width: 560px;
+}
+
+.ff-empty-icon {
+  color: var(--primary);
+}
+
+/* ---------- Panel de configuración ---------- */
+.ff-config-panel,
+.ff-bracket-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+
+.ff-config-header,
+.ff-bracket-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ff-config-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ff-trophy-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border: 1px solid rgba(46, 229, 90, 0.4);
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary);
+  box-shadow: 0 0 14px rgba(46, 229, 90, 0.16);
+}
+
+.ff-config-subtitle {
+  margin: 4px 0 0;
+  font-size: var(--fs-xs);
+}
+
+.ff-config-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ff-btn-danger {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.ff-btn-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.ff-empty-box {
+  padding: var(--space-5);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.ff-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.ff-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+}
+
+.ff-metric-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.ff-metric-value {
+  font-size: var(--fs-lg);
+  color: var(--text);
+}
+
+.ff-info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: var(--radius-sm);
+  background: var(--info-soft);
+  font-size: var(--fs-xs);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.ff-info-note svg {
+  color: var(--info);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ---------- Cuadro eliminatorio (inspirado en Vista eliminatoria de HU-GC-08) ---------- */
+.bracket-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.bracket-scroll {
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.bracket-grid {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-6);
+  min-width: max-content;
+  padding: var(--space-2) var(--space-1);
+}
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 248px;
+  flex-shrink: 0;
+}
+
+.bracket-round-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.bracket-round-header.is-final {
+  border-color: rgba(46, 229, 90, 0.45);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.bracket-round-matches {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1;
+  gap: var(--space-4);
+}
+
+.bracket-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Conector sutil hacia la siguiente columna */
+.bracket-round.has-connector .bracket-slot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: calc(-1 * var(--space-6));
+  width: var(--space-6);
+  height: 2px;
+  background: rgba(34, 211, 238, 0.35);
+}
+
+.bracket-match {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--text);
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bracket-match.has-winner {
+  border-color: rgba(46, 229, 90, 0.45);
+  box-shadow: 0 0 16px rgba(46, 229, 90, 0.12);
+}
+
+.bracket-match.is-empty {
+  border-style: dashed;
+  opacity: 0.9;
+}
+
+.bracket-match.is-clickable {
+  cursor: pointer;
+}
+
+.bracket-match.is-clickable:hover {
+  border-color: var(--accent);
+}
+
+.bracket-match-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.bracket-llave-num {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.bracket-result-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.bracket-result-tag.is-recorded {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.bracket-result-tag.is-waiting {
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.bracket-result-tag.is-undefined {
+  color: var(--text-muted);
+  background: var(--panel);
+}
+
+.bracket-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bracket-team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  font-size: var(--fs-xs);
+}
+
+.bracket-team-row.is-winner {
+  border-color: rgba(46, 229, 90, 0.5);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.bracket-team-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket-team-score {
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  flex-shrink: 0;
+}
+
+.bracket-match-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(28, 51, 84, 0.65);
+}
+
+.bracket-estado-badge {
+  padding: 2px 8px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.estado-finalizado {
+  color: var(--primary);
+  border-color: rgba(46, 229, 90, 0.4);
+  background: var(--primary-soft);
+}
+
+.estado-en-juego {
+  color: var(--accent);
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.estado-programado {
+  color: var(--warning);
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.estado-cancelado {
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.45);
+  background: var(--danger-soft);
+}
+
+.estado-pendiente {
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: var(--panel);
+}
+
+.bracket-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Partido por el tercer puesto ---------- */
+.bracket-third-place {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.bracket-third-header {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--warning);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.bracket-third-card-wrap {
+  max-width: 280px;
+}
+
+@media (max-width: 900px) {
+  .ff-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .ff-metrics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -18,6 +18,12 @@ import { SecurityPage } from '../pages/security/SecurityPage'
 import { UsersPage } from '../pages/security/UsersPage'
 import { TeamsList } from '../pages/gestion-deportiva/equipos/TeamsList'
 import { TeamDetail } from '../pages/gestion-deportiva/equipos/TeamDetail'
+import { FaseFinalPage } from '../pages/gestion-deportiva/fase-final/FaseFinalPage'
+import { PlayersList } from '../pages/gestion-deportiva/jugadores/PlayersList'
+import { PlayerDetail } from '../pages/gestion-deportiva/jugadores/PlayerDetail'
+import { PartidosList } from '../pages/gestion-deportiva/partidos/PartidosList'
+import { PartidoDetail } from '../pages/gestion-deportiva/partidos/PartidoDetail'
+import { PerfilJugadorPage } from '../pages/gestion-deportiva/perfil/PerfilJugadorPage'
 import { TournamentsList } from '../pages/gestion-deportiva/torneos/TournamentsList'
 import { TournamentDetail } from '../pages/gestion-deportiva/torneos/TournamentDetail'
 import { GuestRoute } from './GuestRoute'
@@ -219,13 +225,65 @@ export const router = createBrowserRouter([
               },
               {
                 path: '/torneos/:id/fase-final',
-                element: <PlaceholderPage />,
-                handle: { title: 'Fase final', subtitle: 'Configuración pendiente de la persona C.' },
+                element: <FaseFinalPage />,
+                handle: {
+                  title: 'Fase final',
+                  subtitle: 'Configuración y cuadro eliminatorio del torneo.',
+                },
               },
               {
+                // TODO(HU-GC-08): conectar DesarrolloTorneoPage cuando Persona B suba AnotacionesPartido
                 path: '/torneos/:id/desarrollo',
                 element: <PlaceholderPage />,
                 handle: { title: 'Desarrollo del torneo', subtitle: 'Consulta pendiente de la persona C.' },
+              },
+            ],
+          },
+          {
+            element: <RequirePermission resource="jugadores" operation="listar" />,
+            children: [
+              {
+                path: '/jugadores',
+                element: <PlayersList />,
+                handle: { title: 'Jugadores', subtitle: 'Administra los jugadores registrados.' },
+              },
+            ],
+          },
+          {
+            element: <RequirePermission resource="jugadores" operation="ver" />,
+            children: [
+              {
+                path: '/jugadores/:id',
+                element: <PlayerDetail />,
+                handle: { title: 'Detalle del jugador', subtitle: 'Datos, habilidades y equipos del jugador.' },
+              },
+              {
+                path: '/jugadores/:id/perfil',
+                element: <PerfilJugadorPage />,
+                handle: {
+                  title: 'Perfil deportivo',
+                  subtitle: 'Información general, equipos y habilidades del jugador.',
+                },
+              },
+            ],
+          },
+          {
+            element: <RequirePermission resource="partidos" operation="listar" />,
+            children: [
+              {
+                path: '/partidos',
+                element: <PartidosList />,
+                handle: { title: 'Partidos', subtitle: 'Programa partidos y registra resultados.' },
+              },
+            ],
+          },
+          {
+            element: <RequirePermission resource="partidos" operation="ver" />,
+            children: [
+              {
+                path: '/partidos/:id',
+                element: <PartidoDetail />,
+                handle: { title: 'Detalle del partido', subtitle: 'Estado, resultado y anotaciones del partido.' },
               },
             ],
           },

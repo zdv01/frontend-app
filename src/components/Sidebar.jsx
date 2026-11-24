@@ -1,4 +1,5 @@
 import {
+  CalendarDays,
   ClipboardList,
   House,
   KeyRound,
@@ -49,11 +50,25 @@ const NAV_ITEMS = [
     permission: ['equipos', 'listar'],
   },
   {
+    label: 'Jugadores',
+    to: '/jugadores',
+    icon: Users,
+    paths: ['/jugadores'],
+    permission: ['jugadores', 'listar'],
+  },
+  {
     label: 'Torneos',
     to: '/torneos',
     icon: Trophy,
     paths: ['/torneos'],
     permission: ['torneos', 'listar'],
+  },
+  {
+    label: 'Partidos',
+    to: '/partidos',
+    icon: CalendarDays,
+    paths: ['/partidos'],
+    permission: ['partidos', 'listar'],
   },
   { label: 'Seguridad', to: '/security', icon: LockKeyhole, paths: ['/security'] },
   { label: 'Auditoría', to: '/audit', icon: ClipboardList, paths: ['/audit'] },
