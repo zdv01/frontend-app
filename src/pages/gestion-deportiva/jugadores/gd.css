@@ -1,0 +1,409 @@
+/*
+ * Estilo común de las pantallas de Jugadores, Plantilla y Partidos (persona B).
+ * Solo usa los tokens de styles/tokens.css. Se activa con la clase "gd-skin".
+ */
+
+/* Cabeceras verdes y filas con más aire */
+.gd-skin .data-table th {
+  color: var(--primary);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.gd-skin .data-table td {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.gd-skin .row-selected,
+.gd-skin .row-selected:hover {
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+/* Botones de acción cuadrados con borde */
+.gd-skin .action-btn {
+  border-color: var(--border);
+}
+
+.gd-skin .action-view,
+.gd-skin .action-edit {
+  border-color: rgba(59, 130, 246, 0.45);
+}
+
+.gd-skin .action-success {
+  border-color: rgba(46, 229, 90, 0.45);
+}
+
+.gd-skin .action-danger {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+/* Panel con título e icono */
+.gd-panel-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gd-panel-title svg {
+  color: var(--info);
+}
+
+.gd-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Persona: avatar + nombre */
+.gd-person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.gd-person-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.gd-person-text .text-muted {
+  font-size: var(--fs-xs);
+}
+
+.gd-avatar-lg {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+}
+
+.gd-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+}
+
+.gd-hero h3 {
+  font-size: var(--fs-lg);
+}
+
+/* Filas icono + etiqueta + valor */
+.gd-detail .detail-row {
+  grid-template-columns: minmax(120px, 150px) minmax(0, 1fr);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.gd-detail .detail-row dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gd-detail .detail-row dt svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.gd-detail .detail-row dd {
+  text-align: right;
+}
+
+.gd-detail .detail-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.gd-detail .detail-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Badges de color */
+.badge-danger {
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.45);
+  background: var(--danger-soft);
+}
+
+.badge-warning {
+  color: var(--warning);
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.badge-info {
+  color: var(--info);
+  border-color: rgba(59, 130, 246, 0.45);
+  background: var(--info-soft);
+}
+
+.badge-accent {
+  color: var(--accent);
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(34, 211, 238, 0.1);
+}
+
+/* Botones de color */
+.btn-outline-primary {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.btn-outline-info {
+  border-color: rgba(59, 130, 246, 0.5);
+  color: var(--info);
+  background: var(--info-soft);
+}
+
+.btn-outline-danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* Aviso naranja (advertencia) */
+.gd-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.gd-warning svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--warning);
+}
+
+/* Filtros de listados */
+.gd-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.gd-filters .field {
+  min-width: 180px;
+}
+
+.gd-filters .field label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.gd-filters .gd-filters-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+/* Sub-secciones de la misma pantalla */
+.gd-section-footer {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.gd-form-note {
+  grid-column: 1 / -1;
+}
+
+/* Marcador del partido */
+.gd-scoreboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  text-align: center;
+}
+
+.gd-scoreboard-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.gd-scoreboard-team strong {
+  font-size: var(--fs-lg);
+  overflow-wrap: anywhere;
+}
+
+.gd-scoreboard-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gd-scoreboard-score .score {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.05em;
+}
+
+.gd-versus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gd-versus .vs {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.gd-result-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.gd-result-form .field {
+  width: 140px;
+}
+
+@media (max-width: 640px) {
+  .gd-scoreboard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gd-filters .gd-filters-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Detalle de jugador: fila superior (detalle + equipos) y habilidades a ancho completo */
+.gd-player-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.gd-player-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  align-items: stretch;
+}
+
+.gd-player-grid > .panel {
+  min-width: 0;
+}
+
+.gd-player-skills {
+  min-width: 0;
+}
+
+.gd-nowrap {
+  white-space: nowrap;
+}
+
+.gd-skin .table-scroll {
+  overflow-x: auto;
+}
+
+@media (max-width: 1100px) {
+  .gd-player-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Combobox de jugadores */
+.gd-combo {
+  position: relative;
+}
+
+.gd-combo-field {
+  position: relative;
+}
+
+.gd-combo-icon {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.gd-combo-input {
+  padding-left: 36px;
+}
+
+.gd-combo-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 288px; /* ~6 opciones visibles */
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+.gd-combo-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.gd-combo-option.is-active {
+  background: var(--primary-soft);
+}
+
+.gd-combo-tag {
+  flex-shrink: 0;
+  font-size: var(--fs-xs);
+  color: var(--warning);
+}
+
+.gd-combo-empty {
+  padding: var(--space-3);
+  color: var(--text-muted);
+  text-align: center;
+}

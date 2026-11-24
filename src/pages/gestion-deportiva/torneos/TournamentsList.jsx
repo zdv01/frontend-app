@@ -77,7 +77,17 @@ export function TournamentsList() {
     { key: 'deporte', label: 'Deporte', sortable: true, render: (item) => item.deporte?.nombre ?? '—' },
     { key: 'fechaInicio', label: 'Inicio', sortable: true },
     { key: 'fechaFin', label: 'Fin', sortable: true },
-    { key: 'estado', label: 'Estado', sortable: true, render: (item) => <Chip>{statusLabels[item.estado] ?? item.estado}</Chip> },
+    {
+      key: 'estado', label: 'Estado', sortable: true,
+      // Si el estado sigue ABIERTAS pero ya pasó la fecha de cierre, el backend manda inscripcionesAbiertas = false
+      render: (item) => (
+        <Chip>
+          {item.estado === 'INSCRIPCIONES_ABIERTAS' && item.inscripcionesAbiertas === false
+            ? 'Inscripciones cerradas (vencidas)'
+            : statusLabels[item.estado] ?? item.estado}
+        </Chip>
+      ),
+    },
     {
       key: 'actions', label: 'Acciones', className: 'col-actions',
       render: (item) => (
